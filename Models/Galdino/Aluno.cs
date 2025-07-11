@@ -27,11 +27,5 @@ namespace SmartSell.Api.Models.Galdino
         [MaxLength(14)]
         [Column("cpf")]
         public string Cpf { get; set; } = string.Empty;
-
-        // Relacionamentos
-        public virtual ICollection<RotaAluno> RotaAlunos { get; set; } = new List<RotaAluno>();
-        public virtual ICollection<Pagamento> Pagamentos { get; set; } = new List<Pagamento>();
-        public virtual ICollection<Presenca> Presencas { get; set; } = new List<Presenca>();
-        public virtual ICollection<Notificacao> Notificacoes { get; set; } = new List<Notificacao>();
     }
 }

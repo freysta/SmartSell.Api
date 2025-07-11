@@ -30,21 +30,13 @@ namespace SmartSell.Api.Models.Galdino
         [Required]
         [Column("fk_id_motorista")]
         public int FkIdMotorista { get; set; }
-
-        // Relacionamentos
-        [ForeignKey("FkIdMotorista")]
-        public virtual Usuario Motorista { get; set; } = null!;
-        
-        public virtual ICollection<RotaAluno> RotaAlunos { get; set; } = new List<RotaAluno>();
-        public virtual ICollection<Presenca> Presencas { get; set; } = new List<Presenca>();
     }
 
     public enum StatusRota
     {
         Planejada,
-        [Display(Name = "Em andamento")]
         EmAndamento,
-        Concluída,
+        Concluida,
         Cancelada
     }
 }

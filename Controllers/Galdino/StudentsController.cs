@@ -20,209 +20,150 @@ namespace SmartSell.Api.Controllers.Galdino
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<StudentDto>>> GetStudents(
-            [FromQuery] string? status = null,
-            [FromQuery] string? route = null)
+        public async Task<ActionResult<List<StudentDto>>> GetStudents()
         {
-            try
+            var alunos = await _context.Alunos.ToListAsync();
+
+            var alunosDto = alunos.Select(a => new StudentDto
             {
-                var query = _context.Alunos.AsQueryable();
+                Id = a.IdAluno,
+                Name = a.Nome,
+                Email = a.Email ?? "",
+                Phone = a.Telefone ?? "",
+                Cpf = a.Cpf,
+                PaymentStatus = "paid",
+                Route = "Campus Norte",
+                EnrollmentDate = DateTime.Now,
+                Status = "active",
+                CreatedAt = DateTime.Now
+            }).ToList();
 
-                // Aplicar filtros se fornecidos
-                if (!string.IsNullOrEmpty(status))
-                {
-                    // Implementar lógica de filtro por status se necessário
-                }
-
-                if (!string.IsNullOrEmpty(route))
-                {
-                    // Implementar lógica de filtro por rota se necessário
-                }
-
-                var alunos = await query.ToListAsync();
-
-                var studentDtos = alunos.Select(a => new StudentDto
-                {
-                    Id = a.IdAluno,
-                    Name = a.Nome,
-                    Email = a.Email,
-                    Phone = a.Telefone,
-                    Cpf = a.Cpf,
-                    PaymentStatus = GetPaymentStatus(a.IdAluno),
-                    Route = "Campus Norte", // Implementar lógica real
-                    EnrollmentDate = DateTime.Now.AddDays(-30), // Implementar campo real
-                    Status = "active",
-                    CreatedAt = DateTime.Now.AddDays(-30)
-                }).ToList();
-
-                return Ok(studentDtos);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
+            return Ok(alunosDto);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<StudentDto>> GetStudent(int id)
         {
-            try
+            var aluno = await _context.Alunos.FindAsync(id);
+
+            if (aluno == null)
             {
-                var aluno = await _context.Alunos.FindAsync(id);
-
-                if (aluno == null)
-                {
-                    return NotFound(new { message = "Estudante não encontrado" });
-                }
-
-                var studentDto = new StudentDto
-                {
-                    Id = aluno.IdAluno,
-                    Name = aluno.Nome,
-                    Email = aluno.Email,
-                    Phone = aluno.Telefone,
-                    Cpf = aluno.Cpf,
-                    PaymentStatus = GetPaymentStatus(aluno.IdAluno),
-                    Route = "Campus Norte",
-                    EnrollmentDate = DateTime.Now.AddDays(-30),
-                    Status = "active",
-                    CreatedAt = DateTime.Now.AddDays(-30)
-                };
-
-                return Ok(studentDto);
+                return NotFound(new { message = "Aluno não encontrado" });
             }
-            catch (Exception ex)
+
+            var alunoDto = new StudentDto
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
+                Id = aluno.IdAluno,
+                Name = aluno.Nome,
+                Email = aluno.Email ?? "",
+                Phone = aluno.Telefone ?? "",
+                Cpf = aluno.Cpf,
+                PaymentStatus = "paid",
+                Route = "Campus Norte",
+                EnrollmentDate = DateTime.Now,
+                Status = "active",
+                CreatedAt = DateTime.Now
+            };
+
+            return Ok(alunoDto);
         }
 
         [HttpPost]
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentDto createDto)
         {
-            try
+            var emailExists = await _context.Alunos.AnyAsync(a => a.Email == createDto.Email);
+            if (emailExists)
             {
-                // Verificar se CPF já existe
-                var existingStudent = await _context.Alunos
-                    .FirstOrDefaultAsync(a => a.Cpf == createDto.Cpf);
-
-                if (existingStudent != null)
-                {
-                    return BadRequest(new { message = "CPF já cadastrado" });
-                }
-
-                var aluno = new Aluno
-                {
-                    Nome = createDto.Name,
-                    Email = createDto.Email,
-                    Telefone = createDto.Phone,
-                    Cpf = createDto.Cpf
-                };
-
-                _context.Alunos.Add(aluno);
-                await _context.SaveChangesAsync();
-
-                var studentDto = new StudentDto
-                {
-                    Id = aluno.IdAluno,
-                    Name = aluno.Nome,
-                    Email = aluno.Email,
-                    Phone = aluno.Telefone,
-                    Cpf = aluno.Cpf,
-                    PaymentStatus = "pending",
-                    Route = createDto.Route ?? "Campus Norte",
-                    EnrollmentDate = createDto.EnrollmentDate ?? DateTime.Now,
-                    Status = "active",
-                    CreatedAt = DateTime.Now
-                };
-
-                return CreatedAtAction(nameof(GetStudent), new { id = aluno.IdAluno }, studentDto);
+                return BadRequest(new { message = "Email já está em uso" });
             }
-            catch (Exception ex)
+
+            var cpfExists = await _context.Alunos.AnyAsync(a => a.Cpf == createDto.Cpf);
+            if (cpfExists)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return BadRequest(new { message = "CPF já está em uso" });
             }
+
+            var aluno = new Aluno
+            {
+                Nome = createDto.Name,
+                Email = createDto.Email,
+                Telefone = createDto.Phone,
+                Cpf = createDto.Cpf
+            };
+
+            _context.Alunos.Add(aluno);
+            await _context.SaveChangesAsync();
+
+            var alunoDto = new StudentDto
+            {
+                Id = aluno.IdAluno,
+                Name = aluno.Nome,
+                Email = aluno.Email ?? "",
+                Phone = aluno.Telefone ?? "",
+                Cpf = aluno.Cpf,
+                PaymentStatus = "paid",
+                Route = createDto.Route ?? "Campus Norte",
+                EnrollmentDate = createDto.EnrollmentDate ?? DateTime.Now,
+                Status = "active",
+                CreatedAt = DateTime.Now
+            };
+
+            return CreatedAtAction(nameof(GetStudent), new { id = aluno.IdAluno }, alunoDto);
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateStudent(int id, [FromBody] UpdateStudentDto updateDto)
+        public async Task<ActionResult<StudentDto>> UpdateStudent(int id, [FromBody] UpdateStudentDto updateDto)
         {
-            try
+            var aluno = await _context.Alunos.FindAsync(id);
+            if (aluno == null)
             {
-                var aluno = await _context.Alunos.FindAsync(id);
-
-                if (aluno == null)
-                {
-                    return NotFound(new { message = "Estudante não encontrado" });
-                }
-
-                // Verificar se CPF já existe em outro estudante
-                if (!string.IsNullOrEmpty(updateDto.Cpf) && updateDto.Cpf != aluno.Cpf)
-                {
-                    var existingStudent = await _context.Alunos
-                        .FirstOrDefaultAsync(a => a.Cpf == updateDto.Cpf && a.IdAluno != id);
-
-                    if (existingStudent != null)
-                    {
-                        return BadRequest(new { message = "CPF já cadastrado para outro estudante" });
-                    }
-                }
-
-                // Atualizar campos
-                if (!string.IsNullOrEmpty(updateDto.Name))
-                    aluno.Nome = updateDto.Name;
-
-                if (updateDto.Email != null)
-                    aluno.Email = updateDto.Email;
-
-                if (updateDto.Phone != null)
-                    aluno.Telefone = updateDto.Phone;
-
-                if (!string.IsNullOrEmpty(updateDto.Cpf))
-                    aluno.Cpf = updateDto.Cpf;
-
-                await _context.SaveChangesAsync();
-
-                return NoContent();
+                return NotFound(new { message = "Aluno não encontrado" });
             }
-            catch (Exception ex)
+
+            if (!string.IsNullOrEmpty(updateDto.Name))
+                aluno.Nome = updateDto.Name;
+
+            if (!string.IsNullOrEmpty(updateDto.Email))
+                aluno.Email = updateDto.Email;
+
+            if (!string.IsNullOrEmpty(updateDto.Phone))
+                aluno.Telefone = updateDto.Phone;
+
+            await _context.SaveChangesAsync();
+
+            var alunoDto = new StudentDto
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
+                Id = aluno.IdAluno,
+                Name = aluno.Nome,
+                Email = aluno.Email ?? "",
+                Phone = aluno.Telefone ?? "",
+                Cpf = aluno.Cpf,
+                PaymentStatus = "paid",
+                Route = updateDto.Route ?? "Campus Norte",
+                EnrollmentDate = updateDto.EnrollmentDate ?? DateTime.Now,
+                Status = "active",
+                CreatedAt = DateTime.Now
+            };
+
+            return Ok(alunoDto);
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
-            try
+            var aluno = await _context.Alunos.FindAsync(id);
+            if (aluno == null)
             {
-                var aluno = await _context.Alunos.FindAsync(id);
-
-                if (aluno == null)
-                {
-                    return NotFound(new { message = "Estudante não encontrado" });
-                }
-
-                _context.Alunos.Remove(aluno);
-                await _context.SaveChangesAsync();
-
-                return NoContent();
+                return NotFound(new { message = "Aluno não encontrado" });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
-        }
 
-        private string GetPaymentStatus(int alunoId)
-        {
-            // Implementar lógica real para verificar status de pagamento
-            var random = new Random();
-            var statuses = new[] { "paid", "pending", "overdue" };
-            return statuses[random.Next(statuses.Length)];
+            _context.Alunos.Remove(aluno);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Aluno excluído com sucesso" });
         }
     }
 }

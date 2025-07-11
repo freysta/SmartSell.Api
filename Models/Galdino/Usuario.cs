@@ -20,22 +20,23 @@ namespace SmartSell.Api.Models.Galdino
         [Column("email")]
         public string Email { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        [Column("telefone")]
+        public string? Telefone { get; set; }
+
         [Required]
-        [MaxLength(100)]
         [Column("senha")]
         public string Senha { get; set; } = string.Empty;
 
         [Required]
         [Column("tipo")]
         public TipoUsuario Tipo { get; set; }
-
-        // Relacionamentos
-        public virtual ICollection<Rota> Rotas { get; set; } = new List<Rota>();
     }
 
     public enum TipoUsuario
     {
         Admin,
-        Motorista
+        Motorista,
+        Aluno
     }
 }

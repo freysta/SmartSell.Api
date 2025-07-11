@@ -19,8 +19,12 @@ namespace SmartSell.Api.Models.Galdino
         public int FkIdAluno { get; set; }
 
         [Required]
+        [Column("data_presenca")]
+        public DateTime DataPresenca { get; set; } = DateTime.Now.Date;
+
+        [Required]
         [Column("presente")]
-        public PresencaStatus Presente { get; set; }
+        public StatusPresenca Presente { get; set; }
 
         [Column("observacao")]
         public string? Observacao { get; set; }
@@ -33,9 +37,9 @@ namespace SmartSell.Api.Models.Galdino
         public virtual Aluno Aluno { get; set; } = null!;
     }
 
-    public enum PresencaStatus
+    public enum StatusPresenca
     {
-        Sim,
-        Não
+        Presente,
+        Ausente
     }
 }

@@ -9,21 +9,14 @@ namespace SmartSell.Api.Data
         {
         }
 
-        // DbSets
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Aluno> Alunos { get; set; }
-        public DbSet<PontoEmbarque> PontosEmbarque { get; set; }
         public DbSet<Rota> Rotas { get; set; }
-        public DbSet<RotaAluno> RotaAlunos { get; set; }
-        public DbSet<Pagamento> Pagamentos { get; set; }
-        public DbSet<Presenca> Presencas { get; set; }
-        public DbSet<Notificacao> Notificacoes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configurações de enum para MySQL
             modelBuilder.Entity<Usuario>()
                 .Property(e => e.Tipo)
                 .HasConversion<string>();
@@ -32,72 +25,6 @@ namespace SmartSell.Api.Data
                 .Property(e => e.Status)
                 .HasConversion<string>();
 
-            modelBuilder.Entity<RotaAluno>()
-                .Property(e => e.Confirmado)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Pagamento>()
-                .Property(e => e.Status)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Pagamento>()
-                .Property(e => e.FormaPagamento)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Presenca>()
-                .Property(e => e.Presente)
-                .HasConversion<string>();
-
-            // Configurações de relacionamentos
-            modelBuilder.Entity<Rota>()
-                .HasOne(r => r.Motorista)
-                .WithMany(u => u.Rotas)
-                .HasForeignKey(r => r.FkIdMotorista)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<RotaAluno>()
-                .HasOne(ra => ra.Rota)
-                .WithMany(r => r.RotaAlunos)
-                .HasForeignKey(ra => ra.FkIdRota)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<RotaAluno>()
-                .HasOne(ra => ra.Aluno)
-                .WithMany(a => a.RotaAlunos)
-                .HasForeignKey(ra => ra.FkIdAluno)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<RotaAluno>()
-                .HasOne(ra => ra.PontoEmbarque)
-                .WithMany(p => p.RotaAlunos)
-                .HasForeignKey(ra => ra.FkIdPonto)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Pagamento>()
-                .HasOne(p => p.Aluno)
-                .WithMany(a => a.Pagamentos)
-                .HasForeignKey(p => p.FkIdAluno)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Presenca>()
-                .HasOne(p => p.Rota)
-                .WithMany(r => r.Presencas)
-                .HasForeignKey(p => p.FkIdRota)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Presenca>()
-                .HasOne(p => p.Aluno)
-                .WithMany(a => a.Presencas)
-                .HasForeignKey(p => p.FkIdAluno)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Notificacao>()
-                .HasOne(n => n.Aluno)
-                .WithMany(a => a.Notificacoes)
-                .HasForeignKey(n => n.FkIdAluno)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Índices únicos
             modelBuilder.Entity<Usuario>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
@@ -106,13 +33,11 @@ namespace SmartSell.Api.Data
                 .HasIndex(a => a.Cpf)
                 .IsUnique();
 
-            // Seed data
             SeedData(modelBuilder);
         }
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Usuários iniciais
             modelBuilder.Entity<Usuario>().HasData(
                 new Usuario
                 {
@@ -132,7 +57,6 @@ namespace SmartSell.Api.Data
                 }
             );
 
-            // Alunos iniciais
             modelBuilder.Entity<Aluno>().HasData(
                 new Aluno
                 {
@@ -152,25 +76,15 @@ namespace SmartSell.Api.Data
                 }
             );
 
-            // Pontos de embarque iniciais
-            modelBuilder.Entity<PontoEmbarque>().HasData(
-                new PontoEmbarque
+            modelBuilder.Entity<Rota>().HasData(
+                new Rota
                 {
-                    IdPonto = 1,
-                    Nome = "Terminal Central",
-                    Rua = "Av. Principal, 123",
-                    Bairro = "Centro",
-                    Cidade = "São Paulo",
-                    PontoReferencia = "Próximo ao shopping"
-                },
-                new PontoEmbarque
-                {
-                    IdPonto = 2,
-                    Nome = "Estação Metro Norte",
-                    Rua = "Rua das Flores, 456",
-                    Bairro = "Vila Norte",
-                    Cidade = "São Paulo",
-                    PontoReferencia = "Saída A do metrô"
+                    IdRota = 1,
+                    DataRota = DateTime.Now,
+                    Destino = "Campus Norte",
+                    HorarioSaida = new TimeSpan(8, 0, 0),
+                    Status = StatusRota.Planejada,
+                    FkIdMotorista = 2
                 }
             );
         }
