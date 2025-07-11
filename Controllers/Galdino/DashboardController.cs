@@ -1,13 +1,10 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartSell.Api.Data;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
     [Route("api/dashboard")]
-    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
@@ -18,52 +15,31 @@ namespace SmartSell.Api.Controllers.Galdino
         }
 
         [HttpGet("stats")]
-        public async Task<ActionResult<object>> GetStats()
+        public IActionResult GetStats()
         {
-            var totalStudents = await _context.Alunos.CountAsync();
-            var totalDrivers = await _context.Usuarios
-                .CountAsync(u => u.Tipo == Models.Galdino.TipoUsuario.Motorista);
-            var totalRoutes = await _context.Rotas.CountAsync();
-
-            var stats = new
+            try
             {
-                totalStudents,
-                totalDrivers,
-                totalRoutes,
-                pendingPayments = 5,
-                monthlyRevenue = 15000.00,
-                activeRoutes = totalRoutes
-            };
+                var totalStudents = _context.Alunos.Count();
+                var totalDrivers = _context.Usuarios.Count(u => u._tipo == "Motorista");
+                var totalRoutes = _context.Rotas.Count();
+                var activeRoutes = _context.Rotas.Count(r => r._status == "Ativa");
 
-            return Ok(stats);
-        }
+                var stats = new
+                {
+                    totalStudents = totalStudents,
+                    totalDrivers = totalDrivers,
+                    totalRoutes = totalRoutes,
+                    pendingPayments = 15, // Valor simulado
+                    monthlyRevenue = 24800.0, // Valor simulado
+                    activeRoutes = activeRoutes
+                };
 
-        [HttpGet("recent-activities")]
-        public ActionResult<object> GetRecentActivities()
-        {
-            var activities = new[]
+                return Ok(stats);
+            }
+            catch (Exception ex)
             {
-                new { 
-                    id = 1, 
-                    type = "student_registered", 
-                    message = "Novo aluno cadastrado", 
-                    timestamp = DateTime.Now.AddHours(-2) 
-                },
-                new { 
-                    id = 2, 
-                    type = "route_completed", 
-                    message = "Rota Campus Norte finalizada", 
-                    timestamp = DateTime.Now.AddHours(-4) 
-                },
-                new { 
-                    id = 3, 
-                    type = "payment_received", 
-                    message = "Pagamento recebido", 
-                    timestamp = DateTime.Now.AddHours(-6) 
-                }
-            };
-
-            return Ok(activities);
+                return StatusCode(500, ex.Message);
+            }
         }
     }
 }

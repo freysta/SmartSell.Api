@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "XBwtZR3O8To=",
+  "dgSpecHash": "PE7v8fhSIRo=",
   "success": true,
-  "projectFilePath": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
+  "projectFilePath": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\usebi\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\usebi\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
@@ -70,9 +70,9 @@
       "code": "NU1603",
       "level": "Warning",
       "message": "SmartSell.Api depende de System.IdentityModel.Tokens.Jwt (>= 8.0.4) mas System.IdentityModel.Tokens.Jwt 8.0.4 não foi encontrado. System.IdentityModel.Tokens.Jwt 8.1.0 foi resolvido.",
-      "projectPath": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
+      "projectPath": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
       "warningLevel": 1,
-      "filePath": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
+      "filePath": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
       "libraryId": "System.IdentityModel.Tokens.Jwt",
       "targetGraphs": [
         "net8.0"

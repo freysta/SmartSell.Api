@@ -3,73 +3,41 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Notificacao")]
+    [Table("Notificacoes")]
     public class Notificacao
     {
         [Key]
-        [Column("id_notificacao")]
-        public int IdNotificacao { get; set; }
+        public int _id { get; set; }
+        
+        public string _title { get; set; } = string.Empty;
+        
+        public string _message { get; set; } = string.Empty;
+        
+        public string _type { get; set; } = string.Empty; // "info", "warning", "success", "error"
+        
+        public string _priority { get; set; } = string.Empty; // "low", "normal", "high"
+        
+        public string _targetType { get; set; } = string.Empty; // "all", "students", "drivers", "specific"
+        
+        public string? _targetIds { get; set; } // JSON array como string
+        
+        public DateTime _createdAt { get; set; } = DateTime.Now;
+        
+        public string? _readBy { get; set; } // JSON array como string
 
-        [Required]
-        [MaxLength(200)]
-        [Column("titulo")]
-        public string Titulo { get; set; } = string.Empty;
+        // Construtor padrão
+        public Notificacao() { }
 
-        [Required]
-        [MaxLength(1000)]
-        [Column("mensagem")]
-        public string Mensagem { get; set; } = string.Empty;
-
-        [Required]
-        [Column("tipo")]
-        public TipoNotificacao Tipo { get; set; }
-
-        [Required]
-        [Column("prioridade")]
-        public PrioridadeNotificacao Prioridade { get; set; }
-
-        [Required]
-        [Column("tipo_destino")]
-        public TipoDestinoNotificacao TipoDestino { get; set; }
-
-        [Column("ids_destino")]
-        public string? IdsDestino { get; set; } // JSON array de IDs
-
-        [Required]
-        [Column("data_criacao")]
-        public DateTime DataCriacao { get; set; } = DateTime.Now;
-
-        [Column("lida_por")]
-        public string LidaPor { get; set; } = "[]"; // JSON array de IDs de usuários que leram
-
-        [Column("fk_id_aluno")]
-        public int? FkIdAluno { get; set; }
-
-        // Relacionamentos
-        [ForeignKey("FkIdAluno")]
-        public virtual Aluno? Aluno { get; set; }
-    }
-
-    public enum TipoNotificacao
-    {
-        Info,
-        Warning,
-        Success,
-        Error
-    }
-
-    public enum PrioridadeNotificacao
-    {
-        Low,
-        Normal,
-        High
-    }
-
-    public enum TipoDestinoNotificacao
-    {
-        Todos,
-        Estudantes,
-        Motoristas,
-        Especifico
+        // Construtor com parâmetros
+        public Notificacao(string title, string message, string type, string priority, string targetType)
+        {
+            _title = title;
+            _message = message;
+            _type = type;
+            _priority = priority;
+            _targetType = targetType;
+            _createdAt = DateTime.Now;
+            _readBy = "[]";
+        }
     }
 }

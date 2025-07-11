@@ -94,10 +94,10 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (alunoExistente == null)
                     return NotFound("Aluno não encontrado");
 
-                alunoExistente.Nome = aluno.Nome;
-                alunoExistente.Email = aluno.Email;
-                alunoExistente.Telefone = aluno.Telefone;
-                alunoExistente.Cpf = aluno.Cpf;
+                alunoExistente._nome = aluno._nome;
+                alunoExistente._email = aluno._email;
+                alunoExistente._telefone = aluno._telefone;
+                alunoExistente._cpf = aluno._cpf;
 
                 _context.SaveChanges();
                 return Ok(alunoExistente);

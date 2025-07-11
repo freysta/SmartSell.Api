@@ -94,11 +94,11 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (rotaExistente == null)
                     return NotFound("Rota não encontrada");
 
-                rotaExistente.DataRota = rota.DataRota;
-                rotaExistente.Destino = rota.Destino;
-                rotaExistente.HorarioSaida = rota.HorarioSaida;
-                rotaExistente.Status = rota.Status;
-                rotaExistente.FkIdMotorista = rota.FkIdMotorista;
+                rotaExistente._dataRota = rota._dataRota;
+                rotaExistente._destino = rota._destino;
+                rotaExistente._horarioSaida = rota._horarioSaida;
+                rotaExistente._status = rota._status;
+                rotaExistente._fkIdMotorista = rota._fkIdMotorista;
 
                 _context.SaveChanges();
                 return Ok(rotaExistente);

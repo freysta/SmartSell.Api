@@ -147,3 +147,51 @@ CREATE UNIQUE INDEX `IX_Usuario_email` ON `Usuario` (`email`);
 2025-07-10 20:28:06.578 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/favicon-32x32.png - 200 628 image/png 9.8556ms
 2025-07-10 20:28:06.639 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 161.192ms
 2025-07-10 20:48:08.164 -03:00 [INF] Application is shutting down...
+2025-07-10 20:48:24.370 -03:00 [INF] Executed DbCommand (43ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE WHEN COUNT(*) = 0 THEN FALSE ELSE TRUE END
+FROM information_schema.tables
+WHERE table_type = 'BASE TABLE' AND table_schema = 'InterUniBus'
+2025-07-10 20:48:24.427 -03:00 [INF] User profile is available. Using 'C:\Users\usebi\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2025-07-10 20:48:24.493 -03:00 [INF] Now listening on: http://localhost:5064
+2025-07-10 20:48:24.496 -03:00 [INF] Application started. Press Ctrl+C to shut down.
+2025-07-10 20:48:24.497 -03:00 [INF] Hosting environment: Development
+2025-07-10 20:48:24.499 -03:00 [INF] Content root path: C:\Users\usebi\Documents\Smart\SmartSell.Api
+2025-07-10 20:48:29.957 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5064/index.html - null null
+2025-07-10 20:48:30.084 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/index.html - 200 null text/html;charset=utf-8 129.1333ms
+2025-07-10 20:48:30.133 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5064/index.js - null null
+2025-07-10 20:48:30.172 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/index.js - 200 null application/javascript;charset=utf-8 38.8943ms
+2025-07-10 20:48:31.089 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5064/swagger/v1/swagger.json - null null
+2025-07-10 20:48:31.253 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 164.2995ms
+2025-07-10 20:48:53.847 -03:00 [INF] Request starting HTTP/1.1 POST http://localhost:5064/api/auth/login - application/json 55
+2025-07-10 20:48:53.855 -03:00 [INF] CORS policy execution failed.
+2025-07-10 20:48:53.856 -03:00 [INF] Request origin http://localhost:5064 does not have permission to access the resource.
+2025-07-10 20:48:53.859 -03:00 [WRN] Failed to determine the https port for redirect.
+2025-07-10 20:48:53.922 -03:00 [INF] Executing endpoint 'SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api)'
+2025-07-10 20:48:53.941 -03:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[SmartSell.Api.DTOs.LoginResponseDto]] Login(SmartSell.Api.DTOs.LoginDto) on controller SmartSell.Api.Controllers.Galdino.AuthController (SmartSell.Api).
+2025-07-10 20:48:54.237 -03:00 [INF] Executed DbCommand (30ms) [Parameters=[@__loginDto_Email_0='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT `u`.`id_usuario`, `u`.`email`, `u`.`nome`, `u`.`senha`, `u`.`tipo`
+FROM `Usuario` AS `u`
+WHERE `u`.`email` = @__loginDto_Email_0
+LIMIT 1
+2025-07-10 20:48:54.446 -03:00 [INF] Executing OkObjectResult, writing value of type 'SmartSell.Api.DTOs.LoginResponseDto'.
+2025-07-10 20:48:54.457 -03:00 [INF] Executed action SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api) in 510.3231ms
+2025-07-10 20:48:54.459 -03:00 [INF] Executed endpoint 'SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api)'
+2025-07-10 20:48:54.462 -03:00 [INF] HTTP POST /api/auth/login responded 200 in 599.5923 ms
+2025-07-10 20:48:54.469 -03:00 [INF] Request finished HTTP/1.1 POST http://localhost:5064/api/auth/login - 200 null application/json; charset=utf-8 622.1578ms
+2025-07-10 20:48:56.275 -03:00 [INF] Request starting HTTP/1.1 POST http://localhost:5064/api/auth/login - application/json 55
+2025-07-10 20:48:56.281 -03:00 [INF] CORS policy execution failed.
+2025-07-10 20:48:56.282 -03:00 [INF] Request origin http://localhost:5064 does not have permission to access the resource.
+2025-07-10 20:48:56.285 -03:00 [INF] Executing endpoint 'SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api)'
+2025-07-10 20:48:56.287 -03:00 [INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[SmartSell.Api.DTOs.LoginResponseDto]] Login(SmartSell.Api.DTOs.LoginDto) on controller SmartSell.Api.Controllers.Galdino.AuthController (SmartSell.Api).
+2025-07-10 20:48:56.360 -03:00 [INF] Executed DbCommand (1ms) [Parameters=[@__loginDto_Email_0='?' (Size = 150)], CommandType='"Text"', CommandTimeout='30']
+SELECT `u`.`id_usuario`, `u`.`email`, `u`.`nome`, `u`.`senha`, `u`.`tipo`
+FROM `Usuario` AS `u`
+WHERE `u`.`email` = @__loginDto_Email_0
+LIMIT 1
+2025-07-10 20:48:56.508 -03:00 [INF] Executing OkObjectResult, writing value of type 'SmartSell.Api.DTOs.LoginResponseDto'.
+2025-07-10 20:48:56.510 -03:00 [INF] Executed action SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api) in 219.9367ms
+2025-07-10 20:48:56.513 -03:00 [INF] Executed endpoint 'SmartSell.Api.Controllers.Galdino.AuthController.Login (SmartSell.Api)'
+2025-07-10 20:48:56.514 -03:00 [INF] HTTP POST /api/auth/login responded 200 in 231.1797 ms
+2025-07-10 20:48:56.517 -03:00 [INF] Request finished HTTP/1.1 POST http://localhost:5064/api/auth/login - 200 null application/json; charset=utf-8 242.5062ms
+2025-07-10 21:13:19.821 -03:00 [INF] Request starting HTTP/1.1 GET http://localhost:5064/swagger/v1/swagger.json - null null
+2025-07-10 21:13:20.027 -03:00 [INF] Request finished HTTP/1.1 GET http://localhost:5064/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 217.5437ms

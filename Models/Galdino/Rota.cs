@@ -1,42 +1,29 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Rota")]
     public class Rota
     {
         [Key]
-        [Column("id_rota")]
-        public int IdRota { get; set; }
+        public int _id { get; set; }
+        public DateTime _dataRota { get; set; }
+        public string _destino { get; set; } = string.Empty;
+        public TimeSpan _horarioSaida { get; set; }
+        public string _status { get; set; } = string.Empty;
+        public int _fkIdMotorista { get; set; }
 
-        [Required]
-        [Column("data_rota")]
-        public DateTime DataRota { get; set; }
+        public Rota()
+        {
+        }
 
-        [Required]
-        [MaxLength(150)]
-        [Column("destino")]
-        public string Destino { get; set; } = string.Empty;
-
-        [Required]
-        [Column("horario_saida")]
-        public TimeSpan HorarioSaida { get; set; }
-
-        [Required]
-        [Column("status")]
-        public StatusRota Status { get; set; }
-
-        [Required]
-        [Column("fk_id_motorista")]
-        public int FkIdMotorista { get; set; }
-    }
-
-    public enum StatusRota
-    {
-        Planejada,
-        EmAndamento,
-        Concluida,
-        Cancelada
+        public Rota(int id, DateTime dataRota, string destino, TimeSpan horarioSaida, string status, int fkIdMotorista)
+        {
+            _id = id;
+            _dataRota = dataRota;
+            _destino = destino;
+            _horarioSaida = horarioSaida;
+            _status = status;
+            _fkIdMotorista = fkIdMotorista;
+        }
     }
 }

@@ -1,31 +1,25 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Aluno")]
     public class Aluno
     {
         [Key]
-        [Column("id_aluno")]
-        public int IdAluno { get; set; }
+        public int _id { get; set; }
+        public string _nome { get; set; } = string.Empty;
+        public string? _telefone { get; set; }
+        public string? _email { get; set; }
+        public string _cpf { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(150)]
-        [Column("nome")]
-        public string Nome { get; set; } = string.Empty;
+        public Aluno()
+        {
+        }
 
-        [MaxLength(20)]
-        [Column("telefone")]
-        public string? Telefone { get; set; }
-
-        [MaxLength(150)]
-        [Column("email")]
-        public string? Email { get; set; }
-
-        [Required]
-        [MaxLength(14)]
-        [Column("cpf")]
-        public string Cpf { get; set; } = string.Empty;
+        public Aluno(int id, string nome, string cpf)
+        {
+            _id = id;
+            _nome = nome;
+            _cpf = cpf;
+        }
     }
 }

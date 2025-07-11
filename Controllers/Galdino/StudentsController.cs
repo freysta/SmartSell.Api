@@ -1,15 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartSell.Api.Data;
-using SmartSell.Api.DTOs;
 using SmartSell.Api.Models.Galdino;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
     [Route("api/students")]
-    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
@@ -20,150 +16,186 @@ namespace SmartSell.Api.Controllers.Galdino
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<StudentDto>>> GetStudents()
+        public IActionResult GetAll([FromQuery] string? status, [FromQuery] string? route)
         {
-            var alunos = await _context.Alunos.ToListAsync();
-
-            var alunosDto = alunos.Select(a => new StudentDto
+            try
             {
-                Id = a.IdAluno,
-                Name = a.Nome,
-                Email = a.Email ?? "",
-                Phone = a.Telefone ?? "",
-                Cpf = a.Cpf,
-                PaymentStatus = "paid",
-                Route = "Campus Norte",
-                EnrollmentDate = DateTime.Now,
-                Status = "active",
-                CreatedAt = DateTime.Now
-            }).ToList();
+                var query = _context.Alunos.AsQueryable();
 
-            return Ok(alunosDto);
+                if (!string.IsNullOrEmpty(status))
+                {
+                    // Filtro por status se necessário
+                }
+
+                if (!string.IsNullOrEmpty(route))
+                {
+                    // Filtro por rota se necessário
+                }
+
+                var alunos = query.Select(a => new
+                {
+                    id = a._id,
+                    name = a._nome,
+                    email = a._email,
+                    phone = a._telefone,
+                    cpf = a._cpf,
+                    paymentStatus = "paid", // Valor padrão
+                    route = "Campus Norte", // Valor padrão
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = "active",
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                }).ToList();
+
+                return Ok(alunos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<StudentDto>> GetStudent(int id)
+        public IActionResult GetById(int id)
         {
-            var aluno = await _context.Alunos.FindAsync(id);
-
-            if (aluno == null)
+            try
             {
-                return NotFound(new { message = "Aluno não encontrado" });
+                var aluno = _context.Alunos.Find(id);
+                if (aluno == null)
+                    return NotFound("Aluno não encontrado");
+
+                var response = new
+                {
+                    id = aluno._id,
+                    name = aluno._nome,
+                    email = aluno._email,
+                    phone = aluno._telefone,
+                    cpf = aluno._cpf,
+                    paymentStatus = "paid",
+                    route = "Campus Norte",
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = "active",
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                };
+
+                return Ok(response);
             }
-
-            var alunoDto = new StudentDto
+            catch (Exception ex)
             {
-                Id = aluno.IdAluno,
-                Name = aluno.Nome,
-                Email = aluno.Email ?? "",
-                Phone = aluno.Telefone ?? "",
-                Cpf = aluno.Cpf,
-                PaymentStatus = "paid",
-                Route = "Campus Norte",
-                EnrollmentDate = DateTime.Now,
-                Status = "active",
-                CreatedAt = DateTime.Now
-            };
-
-            return Ok(alunoDto);
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
-        public async Task<ActionResult<StudentDto>> CreateStudent([FromBody] CreateStudentDto createDto)
+        public IActionResult Create([FromBody] CreateStudentRequest request)
         {
-            var emailExists = await _context.Alunos.AnyAsync(a => a.Email == createDto.Email);
-            if (emailExists)
+            try
             {
-                return BadRequest(new { message = "Email já está em uso" });
+                var aluno = new Aluno
+                {
+                    _nome = request.Name,
+                    _email = request.Email,
+                    _telefone = request.Phone,
+                    _cpf = request.Cpf
+                };
+
+                _context.Alunos.Add(aluno);
+                _context.SaveChanges();
+
+                var response = new
+                {
+                    id = aluno._id,
+                    name = aluno._nome,
+                    email = aluno._email,
+                    phone = aluno._telefone,
+                    cpf = aluno._cpf,
+                    paymentStatus = "paid",
+                    route = request.Route ?? "Campus Norte",
+                    enrollmentDate = request.EnrollmentDate ?? DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = "active",
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                };
+
+                return Ok(response);
             }
-
-            var cpfExists = await _context.Alunos.AnyAsync(a => a.Cpf == createDto.Cpf);
-            if (cpfExists)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "CPF já está em uso" });
+                return StatusCode(500, ex.Message);
             }
-
-            var aluno = new Aluno
-            {
-                Nome = createDto.Name,
-                Email = createDto.Email,
-                Telefone = createDto.Phone,
-                Cpf = createDto.Cpf
-            };
-
-            _context.Alunos.Add(aluno);
-            await _context.SaveChangesAsync();
-
-            var alunoDto = new StudentDto
-            {
-                Id = aluno.IdAluno,
-                Name = aluno.Nome,
-                Email = aluno.Email ?? "",
-                Phone = aluno.Telefone ?? "",
-                Cpf = aluno.Cpf,
-                PaymentStatus = "paid",
-                Route = createDto.Route ?? "Campus Norte",
-                EnrollmentDate = createDto.EnrollmentDate ?? DateTime.Now,
-                Status = "active",
-                CreatedAt = DateTime.Now
-            };
-
-            return CreatedAtAction(nameof(GetStudent), new { id = aluno.IdAluno }, alunoDto);
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin")]
-        public async Task<ActionResult<StudentDto>> UpdateStudent(int id, [FromBody] UpdateStudentDto updateDto)
+        public IActionResult Update(int id, [FromBody] UpdateStudentRequest request)
         {
-            var aluno = await _context.Alunos.FindAsync(id);
-            if (aluno == null)
+            try
             {
-                return NotFound(new { message = "Aluno não encontrado" });
+                var aluno = _context.Alunos.Find(id);
+                if (aluno == null)
+                    return NotFound("Aluno não encontrado");
+
+                aluno._nome = request.Name ?? aluno._nome;
+                aluno._email = request.Email ?? aluno._email;
+                aluno._telefone = request.Phone ?? aluno._telefone;
+                aluno._cpf = request.Cpf ?? aluno._cpf;
+
+                _context.SaveChanges();
+
+                var response = new
+                {
+                    id = aluno._id,
+                    name = aluno._nome,
+                    email = aluno._email,
+                    phone = aluno._telefone,
+                    cpf = aluno._cpf,
+                    paymentStatus = "paid",
+                    route = "Campus Norte",
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = "active",
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                };
+
+                return Ok(response);
             }
-
-            if (!string.IsNullOrEmpty(updateDto.Name))
-                aluno.Nome = updateDto.Name;
-
-            if (!string.IsNullOrEmpty(updateDto.Email))
-                aluno.Email = updateDto.Email;
-
-            if (!string.IsNullOrEmpty(updateDto.Phone))
-                aluno.Telefone = updateDto.Phone;
-
-            await _context.SaveChangesAsync();
-
-            var alunoDto = new StudentDto
+            catch (Exception ex)
             {
-                Id = aluno.IdAluno,
-                Name = aluno.Nome,
-                Email = aluno.Email ?? "",
-                Phone = aluno.Telefone ?? "",
-                Cpf = aluno.Cpf,
-                PaymentStatus = "paid",
-                Route = updateDto.Route ?? "Campus Norte",
-                EnrollmentDate = updateDto.EnrollmentDate ?? DateTime.Now,
-                Status = "active",
-                CreatedAt = DateTime.Now
-            };
-
-            return Ok(alunoDto);
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin")]
-        public async Task<IActionResult> DeleteStudent(int id)
+        public IActionResult Delete(int id)
         {
-            var aluno = await _context.Alunos.FindAsync(id);
-            if (aluno == null)
+            try
             {
-                return NotFound(new { message = "Aluno não encontrado" });
+                var aluno = _context.Alunos.Find(id);
+                if (aluno == null)
+                    return NotFound("Aluno não encontrado");
+
+                _context.Alunos.Remove(aluno);
+                _context.SaveChanges();
+                return Ok("Aluno removido com sucesso");
             }
-
-            _context.Alunos.Remove(aluno);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Aluno excluído com sucesso" });
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
+    }
+
+    public class CreateStudentRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string Cpf { get; set; } = string.Empty;
+        public string? Route { get; set; }
+        public string? EnrollmentDate { get; set; }
+    }
+
+    public class UpdateStudentRequest
+    {
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Cpf { get; set; }
     }
 }

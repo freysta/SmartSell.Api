@@ -3112,11 +3112,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
+      "projectUniqueName": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
       "projectName": "SmartSell.Api",
-      "projectPath": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
+      "projectPath": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\SmartSell.Api.csproj",
       "packagesPath": "C:\\Users\\usebi\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\obj\\",
+      "outputPath": "C:\\Users\\usebi\\Documents\\Smart\\SmartSell.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

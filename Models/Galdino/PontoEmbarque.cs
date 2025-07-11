@@ -3,58 +3,43 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("PontoEmbarque")]
+    [Table("PontosEmbarque")]
     public class PontoEmbarque
     {
         [Key]
-        [Column("id_ponto_embarque")]
-        public int IdPontoEmbarque { get; set; }
+        public int _id { get; set; }
+        
+        public string _name { get; set; } = string.Empty;
+        
+        public string _address { get; set; } = string.Empty;
+        
+        public string _neighborhood { get; set; } = string.Empty;
+        
+        public string _city { get; set; } = string.Empty;
+        
+        public double? _lat { get; set; }
+        
+        public double? _lng { get; set; }
+        
+        public string _status { get; set; } = string.Empty; // "active", "inactive", "maintenance"
+        
+        public string? _routes { get; set; } // JSON array como string
+        
+        public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        [Required]
-        [MaxLength(200)]
-        [Column("nome")]
-        public string Nome { get; set; } = string.Empty;
+        // Construtor padrão
+        public PontoEmbarque() { }
 
-        [Required]
-        [MaxLength(300)]
-        [Column("endereco")]
-        public string Endereco { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(100)]
-        [Column("bairro")]
-        public string Bairro { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(100)]
-        [Column("cidade")]
-        public string Cidade { get; set; } = string.Empty;
-
-        [Column("latitude")]
-        public double? Latitude { get; set; }
-
-        [Column("longitude")]
-        public double? Longitude { get; set; }
-
-        [Required]
-        [Column("status")]
-        public StatusPontoEmbarque Status { get; set; } = StatusPontoEmbarque.Ativo;
-
-        [Column("rotas_ids")]
-        public string RotasIds { get; set; } = "[]"; // JSON array de IDs das rotas
-
-        [MaxLength(150)]
-        [Column("ponto_referencia")]
-        public string? PontoReferencia { get; set; }
-
-        // Relacionamentos
-        public virtual ICollection<RotaAluno> RotaAlunos { get; set; } = new List<RotaAluno>();
-    }
-
-    public enum StatusPontoEmbarque
-    {
-        Ativo,
-        Inativo,
-        Manutencao
+        // Construtor com parâmetros
+        public PontoEmbarque(string name, string address, string neighborhood, string city, string status)
+        {
+            _name = name;
+            _address = address;
+            _neighborhood = neighborhood;
+            _city = city;
+            _status = status;
+            _createdAt = DateTime.Now;
+            _routes = "[]";
+        }
     }
 }

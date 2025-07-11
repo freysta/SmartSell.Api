@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartSell.Api.Data;
-using SmartSell.Api.DTOs;
-using SmartSell.Api.Services;
+using SmartSell.Api.Models.Galdino;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
@@ -11,56 +9,82 @@ namespace SmartSell.Api.Controllers.Galdino
     public class AuthController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
-        private readonly JwtService _jwtService;
 
-        public AuthController(GaldinoDbContext context, JwtService jwtService)
+        public AuthController(GaldinoDbContext context)
         {
             _context = context;
-            _jwtService = jwtService;
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginDto loginDto)
+        public IActionResult Login([FromBody] LoginRequest request)
         {
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
-
-            if (usuario == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, usuario.Senha))
+            try
             {
-                return Unauthorized(new { message = "Email ou senha incorretos" });
-            }
+                var usuario = _context.Usuarios
+                    .FirstOrDefault(u => u._email == request.Email);
 
-            var token = _jwtService.GenerateToken(usuario);
-
-            var response = new LoginResponseDto
-            {
-                User = new UserDto
+                if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario._senha))
                 {
-                    Id = usuario.IdUsuario,
-                    Name = usuario.Nome,
-                    Email = usuario.Email,
-                    Role = usuario.Tipo.ToString().ToLower(),
-                    Status = "active"
-                },
-                Token = token
-            };
+                    return Unauthorized("Credenciais inválidas");
+                }
 
-            return Ok(response);
+                var response = new
+                {
+                    user = new
+                    {
+                        id = usuario._id,
+                        name = usuario._nome,
+                        email = usuario._email,
+                        role = usuario._tipo.ToLower(),
+                        status = "active"
+                    },
+                    token = "fake-jwt-token-for-demo"
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            return Ok(new { message = "Logout realizado com sucesso" });
+            return Ok("Logout realizado com sucesso");
         }
 
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetDto)
+        public IActionResult ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.Email == resetDto.Email);
+            try
+            {
+                var usuario = _context.Usuarios
+                    .FirstOrDefault(u => u._email == request.Email);
 
-            return Ok(new { message = "Se o email estiver cadastrado, você receberá as instruções" });
+                if (usuario == null)
+                {
+                    return NotFound("Usuário não encontrado");
+                }
+
+                return Ok("Email de recuperação enviado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
+    }
+
+    public class LoginRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class ResetPasswordRequest
+    {
+        public string Email { get; set; } = string.Empty;
     }
 }

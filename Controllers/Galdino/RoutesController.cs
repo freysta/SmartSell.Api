@@ -1,15 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SmartSell.Api.Data;
-using SmartSell.Api.DTOs;
 using SmartSell.Api.Models.Galdino;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
     [Route("api/routes")]
-    [Authorize]
     public class RoutesController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
@@ -20,314 +16,207 @@ namespace SmartSell.Api.Controllers.Galdino
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<RouteDto>>> GetRoutes()
+        public IActionResult GetAll()
         {
             try
             {
-                var routes = await _context.Rotas
-                    .Include(r => r.Motorista)
-                    .Include(r => r.RotaAlunos)
-                    .ToListAsync();
+                var rotas = _context.Rotas
+                    .Select(r => new
+                    {
+                        id = r._id,
+                        name = r._destino,
+                        origin = "Terminal Rodoviário", // Valor padrão
+                        destination = r._destino,
+                        departureTime = r._horarioSaida.ToString(@"hh\:mm"),
+                        arrivalTime = r._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"), // +1 hora
+                        driverId = r._fkIdMotorista,
+                        status = r._status,
+                        capacity = 40, // Valor padrão
+                        currentPassengers = 28, // Valor padrão
+                        createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    }).ToList();
 
-                var routeDtos = routes.Select(r => new RouteDto
-                {
-                    Id = r.IdRota,
-                    Name = $"Rota para {r.Destino}", // Nome gerado baseado no destino
-                    Origin = "Terminal Central", // Valor padrão - seria necessário adicionar campo no modelo
-                    Destination = r.Destino,
-                    DepartureTime = r.HorarioSaida.ToString(@"hh\:mm"),
-                    ArrivalTime = r.HorarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"), // Estimativa
-                    DriverId = r.FkIdMotorista,
-                    Status = r.Status.ToString().ToLower(),
-                    Capacity = 40, // Valor padrão - seria necessário adicionar campo no modelo
-                    CurrentPassengers = r.RotaAlunos.Count,
-                    CreatedAt = r.DataRota
-                }).ToList();
-
-                return Ok(routeDtos);
+                return Ok(rotas);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<RouteDto>> GetRoute(int id)
+        public IActionResult GetById(int id)
         {
             try
             {
-                var route = await _context.Rotas
-                    .Include(r => r.Motorista)
-                    .Include(r => r.RotaAlunos)
-                    .FirstOrDefaultAsync(r => r.IdRota == id);
+                var rota = _context.Rotas.Find(id);
+                if (rota == null)
+                    return NotFound("Rota não encontrada");
 
-                if (route == null)
+                var response = new
                 {
-                    return NotFound(new { message = "Rota não encontrada" });
-                }
-
-                var routeDto = new RouteDto
-                {
-                    Id = route.IdRota,
-                    Name = $"Rota para {route.Destino}",
-                    Origin = "Terminal Central",
-                    Destination = route.Destino,
-                    DepartureTime = route.HorarioSaida.ToString(@"hh\:mm"),
-                    ArrivalTime = route.HorarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
-                    DriverId = route.FkIdMotorista,
-                    Status = route.Status.ToString().ToLower(),
-                    Capacity = 40,
-                    CurrentPassengers = route.RotaAlunos.Count,
-                    CreatedAt = route.DataRota
+                    id = rota._id,
+                    name = rota._destino,
+                    origin = "Terminal Rodoviário",
+                    destination = rota._destino,
+                    departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
+                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
+                    driverId = rota._fkIdMotorista,
+                    status = rota._status,
+                    capacity = 40,
+                    currentPassengers = 28,
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(routeDto);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
-        public async Task<ActionResult<RouteDto>> CreateRoute([FromBody] CreateRouteDto createDto)
+        public IActionResult Create([FromBody] CreateRouteRequest request)
         {
             try
             {
-                // Verificar se o motorista existe
-                var driver = await _context.Usuarios
-                    .FirstOrDefaultAsync(u => u.IdUsuario == createDto.DriverId && u.Tipo == TipoUsuario.Motorista);
+                // Verificar se motorista existe
+                var motorista = _context.Usuarios
+                    .FirstOrDefault(u => u._id == request.DriverId && u._tipo == "Motorista");
 
-                if (driver == null)
+                if (motorista == null)
                 {
-                    return BadRequest(new { message = "Motorista não encontrado" });
+                    return BadRequest("Motorista não encontrado");
                 }
 
-                // Validar horários
-                if (createDto.ArrivalTime <= createDto.DepartureTime)
+                var rota = new Rota
                 {
-                    return BadRequest(new { message = "Horário de chegada deve ser posterior ao horário de saída" });
-                }
-
-                // Verificar se o motorista já tem rota no mesmo horário
-                var conflictingRoute = await _context.Rotas
-                    .Where(r => r.FkIdMotorista == createDto.DriverId &&
-                               r.DataRota.Date == createDto.RouteDate.Date &&
-                               r.HorarioSaida == createDto.DepartureTime &&
-                               r.Status != StatusRota.Cancelada)
-                    .FirstOrDefaultAsync();
-
-                if (conflictingRoute != null)
-                {
-                    return BadRequest(new { message = "Motorista já possui rota agendada para este horário" });
-                }
-
-                var route = new Rota
-                {
-                    DataRota = createDto.RouteDate,
-                    Destino = createDto.Destination,
-                    HorarioSaida = createDto.DepartureTime,
-                    Status = StatusRota.Planejada,
-                    FkIdMotorista = createDto.DriverId
+                    _dataRota = request.DepartureDate ?? DateTime.Now,
+                    _destino = request.Destination,
+                    _horarioSaida = request.DepartureTime,
+                    _status = "Ativa",
+                    _fkIdMotorista = request.DriverId
                 };
 
-                _context.Rotas.Add(route);
-                await _context.SaveChangesAsync();
+                _context.Rotas.Add(rota);
+                _context.SaveChanges();
 
-                var routeDto = new RouteDto
+                var response = new
                 {
-                    Id = route.IdRota,
-                    Name = createDto.Name,
-                    Origin = createDto.Origin,
-                    Destination = route.Destino,
-                    DepartureTime = route.HorarioSaida.ToString(@"hh\:mm"),
-                    ArrivalTime = createDto.ArrivalTime.ToString(@"hh\:mm"),
-                    DriverId = route.FkIdMotorista,
-                    Status = route.Status.ToString().ToLower(),
-                    Capacity = createDto.Capacity,
-                    CurrentPassengers = 0,
-                    CreatedAt = route.DataRota
+                    id = rota._id,
+                    name = rota._destino,
+                    origin = request.Origin ?? "Terminal Rodoviário",
+                    destination = rota._destino,
+                    departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
+                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
+                    driverId = rota._fkIdMotorista,
+                    status = rota._status,
+                    capacity = 40,
+                    currentPassengers = 0,
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return CreatedAtAction(nameof(GetRoute), new { id = route.IdRota }, routeDto);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateRoute(int id, [FromBody] UpdateRouteDto updateDto)
+        public IActionResult Update(int id, [FromBody] UpdateRouteRequest request)
         {
             try
             {
-                var route = await _context.Rotas.FindAsync(id);
+                var rota = _context.Rotas.Find(id);
+                if (rota == null)
+                    return NotFound("Rota não encontrada");
 
-                if (route == null)
+                // Verificar se novo motorista existe (se fornecido)
+                if (request.DriverId.HasValue)
                 {
-                    return NotFound(new { message = "Rota não encontrada" });
-                }
+                    var motorista = _context.Usuarios
+                        .FirstOrDefault(u => u._id == request.DriverId && u._tipo == "Motorista");
 
-                // Verificar se a rota pode ser editada
-                if (route.Status == StatusRota.EmAndamento || route.Status == StatusRota.Concluída)
-                {
-                    return BadRequest(new { message = "Não é possível editar rota em andamento ou concluída" });
-                }
-
-                // Verificar se o motorista existe (se fornecido)
-                if (updateDto.DriverId.HasValue)
-                {
-                    var driver = await _context.Usuarios
-                        .FirstOrDefaultAsync(u => u.IdUsuario == updateDto.DriverId && u.Tipo == TipoUsuario.Motorista);
-
-                    if (driver == null)
+                    if (motorista == null)
                     {
-                        return BadRequest(new { message = "Motorista não encontrado" });
+                        return BadRequest("Motorista não encontrado");
                     }
                 }
 
-                // Validar horários (se fornecidos)
-                var departureTime = updateDto.DepartureTime ?? route.HorarioSaida;
-                var arrivalTime = updateDto.ArrivalTime ?? route.HorarioSaida.Add(TimeSpan.FromHours(1));
+                rota._destino = request.Destination ?? rota._destino;
+                rota._horarioSaida = request.DepartureTime ?? rota._horarioSaida;
+                rota._fkIdMotorista = request.DriverId ?? rota._fkIdMotorista;
+                rota._dataRota = request.DepartureDate ?? rota._dataRota;
 
-                if (arrivalTime <= departureTime)
+                if (!string.IsNullOrEmpty(request.Status))
                 {
-                    return BadRequest(new { message = "Horário de chegada deve ser posterior ao horário de saída" });
+                    rota._status = request.Status;
                 }
 
-                // Atualizar campos
-                if (!string.IsNullOrEmpty(updateDto.Destination))
-                    route.Destino = updateDto.Destination;
+                _context.SaveChanges();
 
-                if (updateDto.DepartureTime.HasValue)
-                    route.HorarioSaida = updateDto.DepartureTime.Value;
-
-                if (updateDto.DriverId.HasValue)
-                    route.FkIdMotorista = updateDto.DriverId.Value;
-
-                if (updateDto.RouteDate.HasValue)
-                    route.DataRota = updateDto.RouteDate.Value;
-
-                if (!string.IsNullOrEmpty(updateDto.Status))
+                var response = new
                 {
-                    if (Enum.TryParse<StatusRota>(updateDto.Status, true, out var status))
-                    {
-                        route.Status = status;
-                    }
-                }
+                    id = rota._id,
+                    name = rota._destino,
+                    origin = "Terminal Rodoviário",
+                    destination = rota._destino,
+                    departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
+                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
+                    driverId = rota._fkIdMotorista,
+                    status = rota._status,
+                    capacity = 40,
+                    currentPassengers = 28,
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                };
 
-                await _context.SaveChangesAsync();
-
-                return NoContent();
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin")]
-        public async Task<IActionResult> DeleteRoute(int id)
+        public IActionResult Delete(int id)
         {
             try
             {
-                var route = await _context.Rotas
-                    .Include(r => r.RotaAlunos)
-                    .Include(r => r.Presencas)
-                    .FirstOrDefaultAsync(r => r.IdRota == id);
+                var rota = _context.Rotas.Find(id);
+                if (rota == null)
+                    return NotFound("Rota não encontrada");
 
-                if (route == null)
-                {
-                    return NotFound(new { message = "Rota não encontrada" });
-                }
-
-                // Verificar se a rota pode ser excluída
-                if (route.Status == StatusRota.EmAndamento)
-                {
-                    return BadRequest(new { message = "Não é possível excluir rota em andamento" });
-                }
-
-                // Se há alunos ou presenças associadas, apenas cancelar a rota
-                if (route.RotaAlunos.Any() || route.Presencas.Any())
-                {
-                    route.Status = StatusRota.Cancelada;
-                    await _context.SaveChangesAsync();
-                    return Ok(new { message = "Rota cancelada devido a registros associados" });
-                }
-
-                // Se não há registros associados, pode excluir
-                _context.Rotas.Remove(route);
-                await _context.SaveChangesAsync();
-
-                return NoContent();
+                _context.Rotas.Remove(rota);
+                _context.SaveChanges();
+                return Ok("Rota removida com sucesso");
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
+                return StatusCode(500, ex.Message);
             }
         }
+    }
 
-        [HttpPatch("{id}/start")]
-        [Authorize(Roles = "admin,motorista")]
-        public async Task<IActionResult> StartRoute(int id)
-        {
-            try
-            {
-                var route = await _context.Rotas.FindAsync(id);
+    public class CreateRouteRequest
+    {
+        public string Destination { get; set; } = string.Empty;
+        public string? Origin { get; set; }
+        public TimeSpan DepartureTime { get; set; }
+        public DateTime? DepartureDate { get; set; }
+        public int DriverId { get; set; }
+    }
 
-                if (route == null)
-                {
-                    return NotFound(new { message = "Rota não encontrada" });
-                }
-
-                if (route.Status != StatusRota.Planejada)
-                {
-                    return BadRequest(new { message = "Apenas rotas planejadas podem ser iniciadas" });
-                }
-
-                route.Status = StatusRota.EmAndamento;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Rota iniciada com sucesso" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
-        }
-
-        [HttpPatch("{id}/complete")]
-        [Authorize(Roles = "admin,motorista")]
-        public async Task<IActionResult> CompleteRoute(int id)
-        {
-            try
-            {
-                var route = await _context.Rotas.FindAsync(id);
-
-                if (route == null)
-                {
-                    return NotFound(new { message = "Rota não encontrada" });
-                }
-
-                if (route.Status != StatusRota.EmAndamento)
-                {
-                    return BadRequest(new { message = "Apenas rotas em andamento podem ser concluídas" });
-                }
-
-                route.Status = StatusRota.Concluída;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Rota concluída com sucesso" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Erro interno do servidor", error = ex.Message });
-            }
-        }
+    public class UpdateRouteRequest
+    {
+        public string? Destination { get; set; }
+        public string? Origin { get; set; }
+        public TimeSpan? DepartureTime { get; set; }
+        public DateTime? DepartureDate { get; set; }
+        public int? DriverId { get; set; }
+        public string? Status { get; set; }
     }
 }

@@ -3,61 +3,47 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Pagamento")]
+    [Table("Pagamentos")]
     public class Pagamento
     {
         [Key]
-        [Column("id_pagamento")]
-        public int IdPagamento { get; set; }
+        public int _id { get; set; }
+        
+        public int _studentId { get; set; }
+        
+        public decimal _amount { get; set; }
+        
+        public string _month { get; set; } = string.Empty;
+        
+        public int _year { get; set; }
+        
+        public string _status { get; set; } = string.Empty; // "paid", "pending", "overdue"
+        
+        public string? _paymentMethod { get; set; }
+        
+        public DateTime? _paymentDate { get; set; }
+        
+        public DateTime _dueDate { get; set; }
+        
+        public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        [Required]
-        [Column("fk_id_aluno")]
-        public int FkIdAluno { get; set; }
+        // Construtor padrão
+        public Pagamento() { }
 
-        [Required]
-        [Column("valor", TypeName = "decimal(10,2)")]
-        public decimal Valor { get; set; }
+        // Construtor com parâmetros
+        public Pagamento(int studentId, decimal amount, string month, int year, string status, DateTime dueDate)
+        {
+            _studentId = studentId;
+            _amount = amount;
+            _month = month;
+            _year = year;
+            _status = status;
+            _dueDate = dueDate;
+            _createdAt = DateTime.Now;
+        }
 
-        [Required]
-        [Column("data_pagamento")]
-        public DateTime DataPagamento { get; set; }
-
-        [Required]
-        [MaxLength(7)]
-        [Column("referencia_mes")]
-        public string ReferenciaMes { get; set; } = string.Empty; // formato: 07/2025
-
-        [Required]
-        [Column("status")]
-        public StatusPagamento Status { get; set; }
-
-        [Column("forma_pagamento")]
-        public FormaPagamento? FormaPagamento { get; set; }
-
-        [MaxLength(50)]
-        [Column("metodo_pagamento")]
-        public string? MetodoPagamento { get; set; }
-
-        [Column("data_vencimento")]
-        public DateTime DataVencimento { get; set; }
-
-        // Relacionamentos
-        [ForeignKey("FkIdAluno")]
-        public virtual Aluno Aluno { get; set; } = null!;
-    }
-
-    public enum StatusPagamento
-    {
-        Pago,
-        Pendente,
-        Atrasado
-    }
-
-    public enum FormaPagamento
-    {
-        PIX,
-        Cartão,
-        Dinheiro,
-        Transferência
+        // Relacionamento
+        [ForeignKey("_studentId")]
+        public virtual Aluno? Aluno { get; set; }
     }
 }

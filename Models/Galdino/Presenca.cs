@@ -3,43 +3,43 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Presenca")]
+    [Table("Presencas")]
     public class Presenca
     {
         [Key]
-        [Column("id_presenca")]
-        public int IdPresenca { get; set; }
+        public int _id { get; set; }
+        
+        public int _routeId { get; set; }
+        
+        public int _studentId { get; set; }
+        
+        public string _status { get; set; } = string.Empty; // "present", "absent"
+        
+        public string? _observation { get; set; }
+        
+        public DateTime _date { get; set; } = DateTime.Now;
+        
+        public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        [Required]
-        [Column("fk_id_rota")]
-        public int FkIdRota { get; set; }
+        // Construtor padrão
+        public Presenca() { }
 
-        [Required]
-        [Column("fk_id_aluno")]
-        public int FkIdAluno { get; set; }
-
-        [Required]
-        [Column("data_presenca")]
-        public DateTime DataPresenca { get; set; } = DateTime.Now.Date;
-
-        [Required]
-        [Column("presente")]
-        public StatusPresenca Presente { get; set; }
-
-        [Column("observacao")]
-        public string? Observacao { get; set; }
+        // Construtor com parâmetros
+        public Presenca(int routeId, int studentId, string status, string? observation = null)
+        {
+            _routeId = routeId;
+            _studentId = studentId;
+            _status = status;
+            _observation = observation;
+            _date = DateTime.Now;
+            _createdAt = DateTime.Now;
+        }
 
         // Relacionamentos
-        [ForeignKey("FkIdRota")]
-        public virtual Rota Rota { get; set; } = null!;
+        [ForeignKey("_routeId")]
+        public virtual Rota? Rota { get; set; }
 
-        [ForeignKey("FkIdAluno")]
-        public virtual Aluno Aluno { get; set; } = null!;
-    }
-
-    public enum StatusPresenca
-    {
-        Presente,
-        Ausente
+        [ForeignKey("_studentId")]
+        public virtual Aluno? Aluno { get; set; }
     }
 }

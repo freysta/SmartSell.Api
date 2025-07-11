@@ -21,7 +21,7 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 var motoristas = _context.Usuarios
-                    .Where(u => u.Tipo == TipoUsuario.Motorista)
+                    .Where(u => u._tipo == "Motorista")
                     .ToList();
                 return Ok(motoristas);
             }
@@ -45,7 +45,7 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 var motorista = _context.Usuarios
-                    .Where(u => u.Tipo == TipoUsuario.Motorista && u.IdUsuario == id)
+                    .Where(u => u._tipo == "Motorista" && u._id == id)
                     .FirstOrDefault();
                 
                 if (motorista == null)
@@ -72,8 +72,8 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                motorista.Tipo = TipoUsuario.Motorista;
-                motorista.Senha = BCrypt.Net.BCrypt.HashPassword(motorista.Senha);
+                motorista._tipo = "Motorista";
+                motorista._senha = BCrypt.Net.BCrypt.HashPassword(motorista._senha);
                 
                 _context.Usuarios.Add(motorista);
                 _context.SaveChanges();
@@ -99,19 +99,19 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 var motoristaExistente = _context.Usuarios
-                    .Where(u => u.Tipo == TipoUsuario.Motorista && u.IdUsuario == id)
+                    .Where(u => u._tipo == "Motorista" && u._id == id)
                     .FirstOrDefault();
                 
                 if (motoristaExistente == null)
                     return NotFound("Motorista não encontrado");
 
-                motoristaExistente.Nome = motorista.Nome;
-                motoristaExistente.Email = motorista.Email;
-                motoristaExistente.Telefone = motorista.Telefone;
+                motoristaExistente._nome = motorista._nome;
+                motoristaExistente._email = motorista._email;
+                motoristaExistente._telefone = motorista._telefone;
                 
-                if (!string.IsNullOrEmpty(motorista.Senha))
+                if (!string.IsNullOrEmpty(motorista._senha))
                 {
-                    motoristaExistente.Senha = BCrypt.Net.BCrypt.HashPassword(motorista.Senha);
+                    motoristaExistente._senha = BCrypt.Net.BCrypt.HashPassword(motorista._senha);
                 }
 
                 _context.SaveChanges();
@@ -137,7 +137,7 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 var motorista = _context.Usuarios
-                    .Where(u => u.Tipo == TipoUsuario.Motorista && u.IdUsuario == id)
+                    .Where(u => u._tipo == "Motorista" && u._id == id)
                     .FirstOrDefault();
                 
                 if (motorista == null)

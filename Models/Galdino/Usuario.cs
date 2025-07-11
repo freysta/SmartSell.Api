@@ -1,42 +1,28 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Usuario")]
     public class Usuario
     {
         [Key]
-        [Column("id_usuario")]
-        public int IdUsuario { get; set; }
+        public int _id { get; set; }
+        public string _nome { get; set; } = string.Empty;
+        public string _email { get; set; } = string.Empty;
+        public string? _telefone { get; set; }
+        public string _senha { get; set; } = string.Empty;
+        public string _tipo { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(150)]
-        [Column("nome")]
-        public string Nome { get; set; } = string.Empty;
+        public Usuario()
+        {
+        }
 
-        [Required]
-        [MaxLength(150)]
-        [Column("email")]
-        public string Email { get; set; } = string.Empty;
-
-        [MaxLength(20)]
-        [Column("telefone")]
-        public string? Telefone { get; set; }
-
-        [Required]
-        [Column("senha")]
-        public string Senha { get; set; } = string.Empty;
-
-        [Required]
-        [Column("tipo")]
-        public TipoUsuario Tipo { get; set; }
-    }
-
-    public enum TipoUsuario
-    {
-        Admin,
-        Motorista,
-        Aluno
+        public Usuario(int id, string nome, string email, string senha, string tipo)
+        {
+            _id = id;
+            _nome = nome;
+            _email = email;
+            _senha = senha;
+            _tipo = tipo;
+        }
     }
 }
