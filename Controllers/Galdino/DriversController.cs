@@ -27,7 +27,7 @@ namespace SmartSell.Api.Controllers.Galdino
                         id = m._id,
                         name = m._nome,
                         email = m._email,
-                        phone = (string?)null,
+                        phone = m._telefone,
                         cnh = (string?)null,
                         vehicle = (string?)null,
                         licenseExpiry = (string?)null,
@@ -35,7 +35,7 @@ namespace SmartSell.Api.Controllers.Galdino
                         createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                     }).ToList();
 
-                return Ok(motoristas);
+                return Ok(new { data = motoristas, message = "Motoristas listados com sucesso" });
             }
             catch (Exception ex)
             {
@@ -60,7 +60,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = (string?)null,
+                    phone = motorista._telefone,
                     cnh = (string?)null,
                     vehicle = (string?)null,
                     licenseExpiry = (string?)null,
@@ -68,7 +68,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Motorista encontrado" });
             }
             catch (Exception ex)
             {
@@ -81,20 +81,20 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Verificar se email já existe
                 var existingUser = _context.Usuarios
                     .FirstOrDefault(u => u._email == request.Email);
 
                 if (existingUser != null)
                 {
-                    return BadRequest("Email já está em uso");
+                    return BadRequest(new { message = "Email já está em uso" });
                 }
 
                 var motorista = new Usuario
                 {
                     _nome = request.Name,
                     _email = request.Email,
-                    _senha = BCrypt.Net.BCrypt.HashPassword(request.Password ?? "TempPass123!"), // Senha temporária se não fornecida
+                    _telefone = request.Phone,
+                    _senha = BCrypt.Net.BCrypt.HashPassword(request.Password ?? "TempPass123!"),
                     _tipo = "Motorista"
                 };
 
@@ -106,7 +106,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = request.Phone,
+                    phone = motorista._telefone,
                     cnh = request.Cnh,
                     vehicle = request.Vehicle,
                     licenseExpiry = request.LicenseExpiry,
@@ -114,7 +114,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return StatusCode(201, new { data = response, message = "Motorista criado com sucesso" });
             }
             catch (Exception ex)
             {
@@ -134,7 +134,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
-                // Verificar se novo email já existe (se fornecido)
                 if (!string.IsNullOrEmpty(request.Email) && request.Email != motorista._email)
                 {
                     var existingUser = _context.Usuarios
@@ -142,12 +141,13 @@ namespace SmartSell.Api.Controllers.Galdino
 
                     if (existingUser != null)
                     {
-                        return BadRequest("Email já está em uso");
+                        return BadRequest(new { message = "Email já está em uso" });
                     }
                 }
 
                 motorista._nome = request.Name ?? motorista._nome;
                 motorista._email = request.Email ?? motorista._email;
+                motorista._telefone = request.Phone ?? motorista._telefone;
 
                 _context.SaveChanges();
 
@@ -156,7 +156,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = request.Phone,
+                    phone = motorista._telefone,
                     cnh = request.Cnh,
                     vehicle = request.Vehicle,
                     licenseExpiry = request.LicenseExpiry,
@@ -164,7 +164,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Motorista atualizado com sucesso" });
             }
             catch (Exception ex)
             {
@@ -184,19 +184,18 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
-                // Verificar se motorista tem rotas associadas
                 var rotasAssociadas = _context.Rotas
                     .Where(r => r._fkIdMotorista == id)
                     .Any();
 
                 if (rotasAssociadas)
                 {
-                    return BadRequest("Não é possível excluir motorista com rotas associadas");
+                    return BadRequest(new { message = "Não é possível excluir motorista com rotas associadas" });
                 }
 
                 _context.Usuarios.Remove(motorista);
                 _context.SaveChanges();
-                return Ok("Motorista removido com sucesso");
+                return Ok(new { message = "Motorista removido com sucesso" });
             }
             catch (Exception ex)
             {

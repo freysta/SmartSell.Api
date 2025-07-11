@@ -24,7 +24,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 var totalRoutes = _context.Rotas.Count();
                 var activeRoutes = _context.Rotas.Count(r => r._status == "Ativa");
 
-                // Calcular valores reais dos pagamentos
                 var pendingPayments = _context.Pagamentos.Count(p => p._status == "pending");
                 var monthlyRevenue = _context.Pagamentos
                     .Where(p => p._status == "paid" && p._paymentDate.HasValue && 
@@ -42,11 +41,11 @@ namespace SmartSell.Api.Controllers.Galdino
                     activeRoutes = activeRoutes
                 };
 
-                return Ok(stats);
+                return Ok(new { data = stats, message = "Estatísticas obtidas com sucesso" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }

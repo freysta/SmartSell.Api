@@ -34,8 +34,6 @@ namespace SmartSell.Api.Data
 
         private void SeedData(ModelBuilder modelBuilder)
         {
-            // Seed data removido para produção
-            // Os dados devem ser inseridos através dos endpoints da API
         }
     }
 }

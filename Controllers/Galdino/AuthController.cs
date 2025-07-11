@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
+using SmartSell.Api.Services;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
@@ -9,10 +10,12 @@ namespace SmartSell.Api.Controllers.Galdino
     public class AuthController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
+        private readonly JwtService _jwtService;
 
-        public AuthController(GaldinoDbContext context)
+        public AuthController(GaldinoDbContext context, JwtService jwtService)
         {
             _context = context;
+            _jwtService = jwtService;
         }
 
         [HttpPost("login")]
@@ -25,8 +28,11 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario._senha))
                 {
-                    return Unauthorized("Credenciais inválidas");
+                    return Unauthorized(new { message = "Credenciais inválidas" });
                 }
+
+                var token = _jwtService.GenerateToken(usuario._id, usuario._email, usuario._tipo);
+                var refreshToken = _jwtService.GenerateRefreshToken();
 
                 var response = new
                 {
@@ -35,9 +41,12 @@ namespace SmartSell.Api.Controllers.Galdino
                         id = usuario._id,
                         name = usuario._nome,
                         email = usuario._email,
+                        phone = usuario._telefone,
                         role = usuario._tipo.ToLower(),
                         status = "active"
                     },
+                    token = token,
+                    refreshToken = refreshToken,
                     message = "Login realizado com sucesso"
                 };
 
@@ -45,14 +54,47 @@ namespace SmartSell.Api.Controllers.Galdino
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            return Ok("Logout realizado com sucesso");
+            return Ok(new { message = "Logout realizado com sucesso" });
+        }
+
+        [HttpPost("refresh-token")]
+        public IActionResult RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.RefreshToken))
+                {
+                    return BadRequest(new { message = "Refresh token inválido" });
+                }
+
+                var usuario = _context.Usuarios.FirstOrDefault(u => u._id == request.UserId);
+                if (usuario == null)
+                {
+                    return NotFound(new { message = "Usuário não encontrado" });
+                }
+
+                var newToken = _jwtService.GenerateToken(usuario._id, usuario._email, usuario._tipo);
+                var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+                var response = new
+                {
+                    token = newToken,
+                    refreshToken = newRefreshToken
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
         [HttpPost("reset-password")]
@@ -65,14 +107,14 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 if (usuario == null)
                 {
-                    return NotFound("Usuário não encontrado");
+                    return NotFound(new { message = "Usuário não encontrado" });
                 }
 
-                return Ok("Email de recuperação enviado");
+                return Ok(new { message = "Email de recuperação enviado" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }
@@ -81,6 +123,12 @@ namespace SmartSell.Api.Controllers.Galdino
     {
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    public class RefreshTokenRequest
+    {
+        public string RefreshToken { get; set; } = string.Empty;
+        public int UserId { get; set; }
     }
 
     public class ResetPasswordRequest

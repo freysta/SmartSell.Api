@@ -16,31 +16,37 @@ namespace SmartSell.Api.Controllers.Galdino
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromQuery] string? status)
         {
             try
             {
-                var rotas = _context.Rotas
-                    .Select(r => new
-                    {
-                        id = r._id,
-                        name = r._destino,
-                        origin = "Terminal Rodoviário", // Valor padrão
-                        destination = r._destino,
-                        departureTime = r._horarioSaida.ToString(@"hh\:mm"),
-                        arrivalTime = r._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"), // +1 hora
-                        driverId = r._fkIdMotorista,
-                        status = r._status,
-                        capacity = 40, // Valor padrão
-                        currentPassengers = 28, // Valor padrão
-                        createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
-                    }).ToList();
+                var query = _context.Rotas.AsQueryable();
 
-                return Ok(rotas);
+                if (!string.IsNullOrEmpty(status))
+                {
+                    query = query.Where(r => r._status == status);
+                }
+
+                var rotas = query.Select(r => new
+                {
+                    id = r._id,
+                    date = r._dataRota.ToString("yyyy-MM-dd"),
+                    destination = r._destino,
+                    departureTime = r._horarioSaida.ToString(@"hh\:mm"),
+                    status = r._status,
+                    driverId = r._fkIdMotorista,
+                    driverName = _context.Usuarios
+                        .Where(u => u._id == r._fkIdMotorista)
+                        .Select(u => u._nome)
+                        .FirstOrDefault(),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                }).ToList();
+
+                return Ok(new { data = rotas, message = "Rotas listadas com sucesso" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -51,28 +57,28 @@ namespace SmartSell.Api.Controllers.Galdino
             {
                 var rota = _context.Rotas.Find(id);
                 if (rota == null)
-                    return NotFound("Rota não encontrada");
+                    return NotFound(new { message = "Rota não encontrada" });
 
                 var response = new
                 {
                     id = rota._id,
-                    name = rota._destino,
-                    origin = "Terminal Rodoviário",
+                    date = rota._dataRota.ToString("yyyy-MM-dd"),
                     destination = rota._destino,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
-                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
-                    driverId = rota._fkIdMotorista,
                     status = rota._status,
-                    capacity = 40,
-                    currentPassengers = 28,
+                    driverId = rota._fkIdMotorista,
+                    driverName = _context.Usuarios
+                        .Where(u => u._id == rota._fkIdMotorista)
+                        .Select(u => u._nome)
+                        .FirstOrDefault(),
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Rota encontrada" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -81,21 +87,30 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Verificar se motorista existe
                 var motorista = _context.Usuarios
                     .FirstOrDefault(u => u._id == request.DriverId && u._tipo == "Motorista");
 
                 if (motorista == null)
                 {
-                    return BadRequest("Motorista não encontrado");
+                    return BadRequest(new { message = "Motorista não encontrado" });
+                }
+
+                if (!TimeSpan.TryParse(request.DepartureTime, out TimeSpan horarioSaida))
+                {
+                    return BadRequest(new { message = "Formato de horário inválido. Use HH:mm" });
+                }
+
+                if (!DateTime.TryParse(request.Date, out DateTime dataRota))
+                {
+                    return BadRequest(new { message = "Formato de data inválido. Use yyyy-MM-dd" });
                 }
 
                 var rota = new Rota
                 {
-                    _dataRota = request.DepartureDate ?? DateTime.Now,
+                    _dataRota = dataRota,
                     _destino = request.Destination,
-                    _horarioSaida = request.DepartureTime,
-                    _status = "Ativa",
+                    _horarioSaida = horarioSaida,
+                    _status = request.Status ?? "Ativa",
                     _fkIdMotorista = request.DriverId
                 };
 
@@ -105,23 +120,20 @@ namespace SmartSell.Api.Controllers.Galdino
                 var response = new
                 {
                     id = rota._id,
-                    name = rota._destino,
-                    origin = request.Origin ?? "Terminal Rodoviário",
+                    date = rota._dataRota.ToString("yyyy-MM-dd"),
                     destination = rota._destino,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
-                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
-                    driverId = rota._fkIdMotorista,
                     status = rota._status,
-                    capacity = 40,
-                    currentPassengers = 0,
+                    driverId = rota._fkIdMotorista,
+                    driverName = motorista._nome,
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return StatusCode(201, new { data = response, message = "Rota criada com sucesso" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -132,9 +144,8 @@ namespace SmartSell.Api.Controllers.Galdino
             {
                 var rota = _context.Rotas.Find(id);
                 if (rota == null)
-                    return NotFound("Rota não encontrada");
+                    return NotFound(new { message = "Rota não encontrada" });
 
-                // Verificar se novo motorista existe (se fornecido)
                 if (request.DriverId.HasValue)
                 {
                     var motorista = _context.Usuarios
@@ -142,42 +153,60 @@ namespace SmartSell.Api.Controllers.Galdino
 
                     if (motorista == null)
                     {
-                        return BadRequest("Motorista não encontrado");
+                        return BadRequest(new { message = "Motorista não encontrado" });
+                    }
+                    rota._fkIdMotorista = request.DriverId.Value;
+                }
+
+                if (!string.IsNullOrEmpty(request.Date))
+                {
+                    if (DateTime.TryParse(request.Date, out DateTime dataRota))
+                    {
+                        rota._dataRota = dataRota;
+                    }
+                    else
+                    {
+                        return BadRequest(new { message = "Formato de data inválido. Use yyyy-MM-dd" });
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.DepartureTime))
+                {
+                    if (TimeSpan.TryParse(request.DepartureTime, out TimeSpan horarioSaida))
+                    {
+                        rota._horarioSaida = horarioSaida;
+                    }
+                    else
+                    {
+                        return BadRequest(new { message = "Formato de horário inválido. Use HH:mm" });
                     }
                 }
 
                 rota._destino = request.Destination ?? rota._destino;
-                rota._horarioSaida = request.DepartureTime ?? rota._horarioSaida;
-                rota._fkIdMotorista = request.DriverId ?? rota._fkIdMotorista;
-                rota._dataRota = request.DepartureDate ?? rota._dataRota;
-
-                if (!string.IsNullOrEmpty(request.Status))
-                {
-                    rota._status = request.Status;
-                }
+                rota._status = request.Status ?? rota._status;
 
                 _context.SaveChanges();
 
                 var response = new
                 {
                     id = rota._id,
-                    name = rota._destino,
-                    origin = "Terminal Rodoviário",
+                    date = rota._dataRota.ToString("yyyy-MM-dd"),
                     destination = rota._destino,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
-                    arrivalTime = rota._horarioSaida.Add(TimeSpan.FromHours(1)).ToString(@"hh\:mm"),
-                    driverId = rota._fkIdMotorista,
                     status = rota._status,
-                    capacity = 40,
-                    currentPassengers = 28,
+                    driverId = rota._fkIdMotorista,
+                    driverName = _context.Usuarios
+                        .Where(u => u._id == rota._fkIdMotorista)
+                        .Select(u => u._nome)
+                        .FirstOrDefault(),
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Rota atualizada com sucesso" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -188,35 +217,34 @@ namespace SmartSell.Api.Controllers.Galdino
             {
                 var rota = _context.Rotas.Find(id);
                 if (rota == null)
-                    return NotFound("Rota não encontrada");
+                    return NotFound(new { message = "Rota não encontrada" });
 
                 _context.Rotas.Remove(rota);
                 _context.SaveChanges();
-                return Ok("Rota removida com sucesso");
+                return Ok(new { message = "Rota removida com sucesso" });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }
 
     public class CreateRouteRequest
     {
+        public string Date { get; set; } = string.Empty;
         public string Destination { get; set; } = string.Empty;
-        public string? Origin { get; set; }
-        public TimeSpan DepartureTime { get; set; }
-        public DateTime? DepartureDate { get; set; }
+        public string DepartureTime { get; set; } = string.Empty;
+        public string? Status { get; set; }
         public int DriverId { get; set; }
     }
 
     public class UpdateRouteRequest
     {
+        public string? Date { get; set; }
         public string? Destination { get; set; }
-        public string? Origin { get; set; }
-        public TimeSpan? DepartureTime { get; set; }
-        public DateTime? DepartureDate { get; set; }
-        public int? DriverId { get; set; }
+        public string? DepartureTime { get; set; }
         public string? Status { get; set; }
+        public int? DriverId { get; set; }
     }
 }

@@ -24,12 +24,10 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 if (!string.IsNullOrEmpty(status))
                 {
-                    // Filtro por status se necessário
                 }
 
                 if (!string.IsNullOrEmpty(route))
                 {
-                    // Filtro por rota se necessário
                 }
 
                 var alunos = query.Select(a => new
@@ -46,7 +44,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 }).ToList();
 
-                return Ok(alunos);
+                return Ok(new { data = alunos, message = "Alunos listados com sucesso" });
             }
             catch (Exception ex)
             {
@@ -77,7 +75,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Aluno encontrado" });
             }
             catch (Exception ex)
             {
@@ -90,6 +88,22 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
+                var existingStudent = _context.Alunos
+                    .FirstOrDefault(a => a._email == request.Email);
+
+                if (existingStudent != null)
+                {
+                    return BadRequest(new { message = "Email já está em uso" });
+                }
+
+                var existingCpf = _context.Alunos
+                    .FirstOrDefault(a => a._cpf == request.Cpf);
+
+                if (existingCpf != null)
+                {
+                    return BadRequest(new { message = "CPF já está em uso" });
+                }
+
                 var aluno = new Aluno
                 {
                     _nome = request.Name,
@@ -115,7 +129,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return StatusCode(201, new { data = response, message = "Aluno criado com sucesso" });
             }
             catch (Exception ex)
             {
@@ -131,6 +145,28 @@ namespace SmartSell.Api.Controllers.Galdino
                 var aluno = _context.Alunos.Find(id);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
+
+                if (!string.IsNullOrEmpty(request.Email) && request.Email != aluno._email)
+                {
+                    var existingEmail = _context.Alunos
+                        .FirstOrDefault(a => a._email == request.Email && a._id != id);
+
+                    if (existingEmail != null)
+                    {
+                        return BadRequest(new { message = "Email já está em uso" });
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.Cpf) && request.Cpf != aluno._cpf)
+                {
+                    var existingCpf = _context.Alunos
+                        .FirstOrDefault(a => a._cpf == request.Cpf && a._id != id);
+
+                    if (existingCpf != null)
+                    {
+                        return BadRequest(new { message = "CPF já está em uso" });
+                    }
+                }
 
                 aluno._nome = request.Name ?? aluno._nome;
                 aluno._email = request.Email ?? aluno._email;
@@ -153,7 +189,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(response);
+                return Ok(new { data = response, message = "Aluno atualizado com sucesso" });
             }
             catch (Exception ex)
             {
@@ -172,7 +208,7 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 _context.Alunos.Remove(aluno);
                 _context.SaveChanges();
-                return Ok("Aluno removido com sucesso");
+                return Ok(new { message = "Aluno removido com sucesso" });
             }
             catch (Exception ex)
             {
