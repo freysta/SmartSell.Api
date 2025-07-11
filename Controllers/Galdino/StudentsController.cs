@@ -39,9 +39,9 @@ namespace SmartSell.Api.Controllers.Galdino
                     email = a._email,
                     phone = a._telefone,
                     cpf = a._cpf,
-                    paymentStatus = "paid", // Valor padrão
-                    route = "Campus Norte", // Valor padrão
-                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    paymentStatus = (string?)null,
+                    route = (string?)null,
+                    enrollmentDate = (string?)null,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 }).ToList();
@@ -70,9 +70,9 @@ namespace SmartSell.Api.Controllers.Galdino
                     email = aluno._email,
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = "paid",
-                    route = "Campus Norte",
-                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    paymentStatus = (string?)null,
+                    route = (string?)null,
+                    enrollmentDate = (string?)null,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -108,9 +108,9 @@ namespace SmartSell.Api.Controllers.Galdino
                     email = aluno._email,
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = "paid",
-                    route = request.Route ?? "Campus Norte",
-                    enrollmentDate = request.EnrollmentDate ?? DateTime.Now.ToString("yyyy-MM-dd"),
+                    paymentStatus = (string?)null,
+                    route = request.Route,
+                    enrollmentDate = request.EnrollmentDate,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -146,9 +146,9 @@ namespace SmartSell.Api.Controllers.Galdino
                     email = aluno._email,
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = "paid",
-                    route = "Campus Norte",
-                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    paymentStatus = (string?)null,
+                    route = (string?)null,
+                    enrollmentDate = (string?)null,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };

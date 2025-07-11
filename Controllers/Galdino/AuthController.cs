@@ -38,7 +38,7 @@ namespace SmartSell.Api.Controllers.Galdino
                         role = usuario._tipo.ToLower(),
                         status = "active"
                     },
-                    token = "fake-jwt-token-for-demo"
+                    message = "Login realizado com sucesso"
                 };
 
                 return Ok(response);

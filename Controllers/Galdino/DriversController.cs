@@ -27,10 +27,10 @@ namespace SmartSell.Api.Controllers.Galdino
                         id = m._id,
                         name = m._nome,
                         email = m._email,
-                        phone = "11999999999", // Valor padrão
-                        cnh = "12345678901", // Valor padrão
-                        vehicle = "Ônibus Mercedes-Benz", // Valor padrão
-                        licenseExpiry = "2025-12-31", // Valor padrão
+                        phone = (string?)null,
+                        cnh = (string?)null,
+                        vehicle = (string?)null,
+                        licenseExpiry = (string?)null,
                         status = "active",
                         createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                     }).ToList();
@@ -60,10 +60,10 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = "11999999999",
-                    cnh = "12345678901",
-                    vehicle = "Ônibus Mercedes-Benz",
-                    licenseExpiry = "2025-12-31",
+                    phone = (string?)null,
+                    cnh = (string?)null,
+                    vehicle = (string?)null,
+                    licenseExpiry = (string?)null,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -94,7 +94,7 @@ namespace SmartSell.Api.Controllers.Galdino
                 {
                     _nome = request.Name,
                     _email = request.Email,
-                    _senha = BCrypt.Net.BCrypt.HashPassword("123456"), // Senha padrão
+                    _senha = BCrypt.Net.BCrypt.HashPassword(request.Password ?? "TempPass123!"), // Senha temporária se não fornecida
                     _tipo = "Motorista"
                 };
 
@@ -106,10 +106,10 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = request.Phone ?? "11999999999",
-                    cnh = request.Cnh ?? "12345678901",
-                    vehicle = request.Vehicle ?? "Ônibus Mercedes-Benz",
-                    licenseExpiry = request.LicenseExpiry ?? "2025-12-31",
+                    phone = request.Phone,
+                    cnh = request.Cnh,
+                    vehicle = request.Vehicle,
+                    licenseExpiry = request.LicenseExpiry,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -156,10 +156,10 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = request.Phone ?? "11999999999",
-                    cnh = request.Cnh ?? "12345678901",
-                    vehicle = request.Vehicle ?? "Ônibus Mercedes-Benz",
-                    licenseExpiry = request.LicenseExpiry ?? "2025-12-31",
+                    phone = request.Phone,
+                    cnh = request.Cnh,
+                    vehicle = request.Vehicle,
+                    licenseExpiry = request.LicenseExpiry,
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -209,6 +209,7 @@ namespace SmartSell.Api.Controllers.Galdino
     {
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? Password { get; set; }
         public string? Phone { get; set; }
         public string? Cnh { get; set; }
         public string? Vehicle { get; set; }

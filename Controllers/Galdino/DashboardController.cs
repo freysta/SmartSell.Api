@@ -24,13 +24,21 @@ namespace SmartSell.Api.Controllers.Galdino
                 var totalRoutes = _context.Rotas.Count();
                 var activeRoutes = _context.Rotas.Count(r => r._status == "Ativa");
 
+                // Calcular valores reais dos pagamentos
+                var pendingPayments = _context.Pagamentos.Count(p => p._status == "pending");
+                var monthlyRevenue = _context.Pagamentos
+                    .Where(p => p._status == "paid" && p._paymentDate.HasValue && 
+                               p._paymentDate.Value.Month == DateTime.Now.Month &&
+                               p._paymentDate.Value.Year == DateTime.Now.Year)
+                    .Sum(p => (double)p._amount);
+
                 var stats = new
                 {
                     totalStudents = totalStudents,
                     totalDrivers = totalDrivers,
                     totalRoutes = totalRoutes,
-                    pendingPayments = 15, // Valor simulado
-                    monthlyRevenue = 24800.0, // Valor simulado
+                    pendingPayments = pendingPayments,
+                    monthlyRevenue = monthlyRevenue,
                     activeRoutes = activeRoutes
                 };
 
