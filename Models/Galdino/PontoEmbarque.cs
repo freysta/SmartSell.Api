@@ -21,16 +21,14 @@ namespace SmartSell.Api.Models.Galdino
         
         public double? _lng { get; set; }
         
-        public string _status { get; set; } = string.Empty; // "active", "inactive", "maintenance"
+        public string _status { get; set; } = string.Empty;
         
-        public string? _routes { get; set; } // JSON array como string
+        public string? _routes { get; set; }
         
         public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        // Construtor padrão
         public PontoEmbarque() { }
 
-        // Construtor com parâmetros
         public PontoEmbarque(string name, string address, string neighborhood, string city, string status)
         {
             _name = name;

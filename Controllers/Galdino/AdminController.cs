@@ -20,7 +20,6 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Verificar se email já existe
                 var existingUser = _context.Usuarios
                     .FirstOrDefault(u => u._email == request.Email);
 
@@ -92,7 +91,6 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Verificar se já existe algum admin
                 var existingAdmin = _context.Usuarios
                     .FirstOrDefault(u => u._tipo == "Admin");
 
@@ -101,7 +99,6 @@ namespace SmartSell.Api.Controllers.Galdino
                     return BadRequest("Já existe um administrador no sistema. Use o endpoint /create-admin");
                 }
 
-                // Verificar se email já existe
                 var existingUser = _context.Usuarios
                     .FirstOrDefault(u => u._email == request.Email);
 

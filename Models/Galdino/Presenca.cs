@@ -13,7 +13,7 @@ namespace SmartSell.Api.Models.Galdino
         
         public int _studentId { get; set; }
         
-        public string _status { get; set; } = string.Empty; // "present", "absent"
+        public string _status { get; set; } = string.Empty; 
         
         public string? _observation { get; set; }
         
@@ -21,10 +21,8 @@ namespace SmartSell.Api.Models.Galdino
         
         public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        // Construtor padrão
         public Presenca() { }
 
-        // Construtor com parâmetros
         public Presenca(int routeId, int studentId, string status, string? observation = null)
         {
             _routeId = routeId;
@@ -35,7 +33,6 @@ namespace SmartSell.Api.Models.Galdino
             _createdAt = DateTime.Now;
         }
 
-        // Relacionamentos
         [ForeignKey("_routeId")]
         public virtual Rota? Rota { get; set; }
 

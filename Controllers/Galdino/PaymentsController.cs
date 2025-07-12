@@ -177,7 +177,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // PATCH: api/payments/5/mark-paid
         [HttpPatch("{id}/mark-paid")]
         public async Task<ActionResult<object>> MarkPaymentAsPaid(int id)
         {

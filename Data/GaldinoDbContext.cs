@@ -12,6 +12,7 @@ namespace SmartSell.Api.Data
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Aluno> Alunos { get; set; }
         public DbSet<Rota> Rotas { get; set; }
+        public DbSet<RotaAluno> RotaAlunos { get; set; }
         public DbSet<Pagamento> Pagamentos { get; set; }
         public DbSet<Notificacao> Notificacoes { get; set; }
         public DbSet<PontoEmbarque> PontosEmbarque { get; set; }

@@ -13,22 +13,20 @@ namespace SmartSell.Api.Models.Galdino
         
         public string _message { get; set; } = string.Empty;
         
-        public string _type { get; set; } = string.Empty; // "info", "warning", "success", "error"
+        public string _type { get; set; } = string.Empty;
         
-        public string _priority { get; set; } = string.Empty; // "low", "normal", "high"
+        public string _priority { get; set; } = string.Empty;
         
-        public string _targetType { get; set; } = string.Empty; // "all", "students", "drivers", "specific"
+        public string _targetType { get; set; } = string.Empty;
         
-        public string? _targetIds { get; set; } // JSON array como string
+        public string? _targetIds { get; set; }
         
         public DateTime _createdAt { get; set; } = DateTime.Now;
         
-        public string? _readBy { get; set; } // JSON array como string
+        public string? _readBy { get; set; }
 
-        // Construtor padrão
         public Notificacao() { }
 
-        // Construtor com parâmetros
         public Notificacao(string title, string message, string type, string priority, string targetType)
         {
             _title = title;

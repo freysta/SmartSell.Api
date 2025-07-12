@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartSell.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+df59fcb0054efd0308a06345b742ee4e22beb6b4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bbdc244b88abf2e6f44176cb999af0852350fe08")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartSell.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartSell.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

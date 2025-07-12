@@ -17,7 +17,7 @@ namespace SmartSell.Api.Models.Galdino
         
         public int _year { get; set; }
         
-        public string _status { get; set; } = string.Empty; // "paid", "pending", "overdue"
+        public string _status { get; set; } = string.Empty; 
         
         public string? _paymentMethod { get; set; }
         
@@ -27,10 +27,8 @@ namespace SmartSell.Api.Models.Galdino
         
         public DateTime _createdAt { get; set; } = DateTime.Now;
 
-        // Construtor padrão
         public Pagamento() { }
 
-        // Construtor com parâmetros
         public Pagamento(int studentId, decimal amount, string month, int year, string status, DateTime dueDate)
         {
             _studentId = studentId;
@@ -42,7 +40,6 @@ namespace SmartSell.Api.Models.Galdino
             _createdAt = DateTime.Now;
         }
 
-        // Relacionamento
         [ForeignKey("_studentId")]
         public virtual Aluno? Aluno { get; set; }
     }
