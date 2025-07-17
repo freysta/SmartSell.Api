@@ -22,7 +22,6 @@ namespace SmartSell.Api.Controllers.Galdino
             _rotaDAO = new RotaDAO(context);
         }
 
-        // GET: api/attendance
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetAttendanceHistory(
             [FromQuery] int? studentId = null,
@@ -52,7 +51,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // GET: api/attendance/5
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetAttendance(int id)
         {
@@ -79,7 +77,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // POST: api/attendance
         [HttpPost]
         public async Task<ActionResult<object>> MarkAttendance([FromBody] JsonElement body)
         {
@@ -90,21 +87,18 @@ namespace SmartSell.Api.Controllers.Galdino
                 var status = body.GetProperty("status").GetString() ?? "present";
                 var observation = body.TryGetProperty("observation", out var obsElement) ? obsElement.GetString() : null;
 
-                // Verificar se o aluno existe
                 var aluno = _alunoDAO.GetById(studentId);
                 if (aluno == null)
                 {
                     return BadRequest(new { error = new { message = "Aluno não encontrado", code = "STUDENT_NOT_FOUND" } });
                 }
 
-                // Verificar se a rota existe
                 var rota = _rotaDAO.GetById(routeId);
                 if (rota == null)
                 {
                     return BadRequest(new { error = new { message = "Rota não encontrada", code = "ROUTE_NOT_FOUND" } });
                 }
 
-                // Criar nova presença
                 var presenca = new Presenca
                 {
                     _rotaId = routeId,
@@ -136,7 +130,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // PUT: api/attendance/5
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdateAttendance(int id, [FromBody] JsonElement body)
         {
@@ -178,7 +171,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // DELETE: api/attendance/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAttendance(int id)
         {
@@ -193,7 +185,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return NoContent();
         }
 
-        // GET: api/attendance/student/5/summary
         [HttpGet("student/{studentId}/summary")]
         public async Task<ActionResult<object>> GetStudentAttendanceSummary(int studentId)
         {

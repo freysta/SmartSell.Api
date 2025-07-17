@@ -101,7 +101,7 @@ namespace SmartSell.Api.DAO
             }
         }
 
-        public List<Pagamento> GetByStatus(string status)
+        public List<Pagamento> GetByStatus(StatusPagamentoEnum status)
         {
             try
             {

@@ -10,10 +10,12 @@ namespace SmartSell.Api.Controllers.Galdino
     public class AdminController : ControllerBase
     {
         private readonly UsuarioDAO _usuarioDAO;
+        private readonly GestorSistemaDAO _gestorSistemaDAO;
 
         public AdminController(GaldinoDbContext context)
         {
             _usuarioDAO = new UsuarioDAO(context);
+            _gestorSistemaDAO = new GestorSistemaDAO(context);
         }
 
         [HttpPost("create-admin")]
@@ -21,14 +23,21 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
+                // Validar se email já existe
                 var existingUser = _usuarioDAO.GetByEmail(request.Email);
-
                 if (existingUser != null)
                 {
-                    return BadRequest("Email já está em uso");
+                    return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                var admin = new Usuario
+                // Validar campos obrigatórios
+                if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                {
+                    return BadRequest(new { message = "Nome, email e senha são obrigatórios" });
+                }
+
+                // 1. Primeiro criar o usuário
+                var usuario = new Usuario
                 {
                     _nome = request.Name,
                     _email = request.Email,
@@ -36,14 +45,24 @@ namespace SmartSell.Api.Controllers.Galdino
                     _ativo = true
                 };
 
-                _usuarioDAO.Create(admin);
+                _usuarioDAO.Create(usuario);
+
+                // 2. Depois criar o gestor de sistema vinculado ao usuário
+                var gestorSistema = new GestorSistema
+                {
+                    _nivelAcesso = request.AccessLevel ?? 1, // Nível padrão 1 se não especificado
+                    _usuarioId = usuario._id // ✅ Vinculação correta
+                };
+
+                _gestorSistemaDAO.Create(gestorSistema);
 
                 var response = new
                 {
-                    id = admin._id,
-                    name = admin._nome,
-                    email = admin._email,
+                    id = gestorSistema._id,
+                    name = usuario._nome,
+                    email = usuario._email,
                     phone = request.Phone ?? "",
+                    accessLevel = gestorSistema._nivelAcesso,
                     role = "Admin",
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -90,16 +109,21 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Remover verificação de primeiro admin
-
+                // Validar se email já existe
                 var existingUser = _usuarioDAO.GetByEmail(request.Email);
-
                 if (existingUser != null)
                 {
-                    return BadRequest("Email já está em uso");
+                    return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                var admin = new Usuario
+                // Validar campos obrigatórios
+                if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                {
+                    return BadRequest(new { message = "Nome, email e senha são obrigatórios" });
+                }
+
+                // 1. Primeiro criar o usuário
+                var usuario = new Usuario
                 {
                     _nome = request.Name,
                     _email = request.Email,
@@ -107,14 +131,24 @@ namespace SmartSell.Api.Controllers.Galdino
                     _ativo = true
                 };
 
-                _usuarioDAO.Create(admin);
+                _usuarioDAO.Create(usuario);
+
+                // 2. Depois criar o gestor de sistema vinculado ao usuário
+                var gestorSistema = new GestorSistema
+                {
+                    _nivelAcesso = request.AccessLevel ?? 1, // Nível padrão 1 se não especificado
+                    _usuarioId = usuario._id // ✅ Vinculação correta
+                };
+
+                _gestorSistemaDAO.Create(gestorSistema);
 
                 var response = new
                 {
-                    id = admin._id,
-                    name = admin._nome,
-                    email = admin._email,
+                    id = gestorSistema._id,
+                    name = usuario._nome,
+                    email = usuario._email,
                     phone = request.Phone ?? "",
+                    accessLevel = gestorSistema._nivelAcesso,
                     role = "Admin",
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
@@ -136,5 +170,6 @@ namespace SmartSell.Api.Controllers.Galdino
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string? Phone { get; set; }
+        public int? AccessLevel { get; set; }
     }
 }

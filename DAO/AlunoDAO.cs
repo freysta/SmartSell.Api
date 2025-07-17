@@ -13,18 +13,51 @@ namespace SmartSell.Api.DAO
             _context = context;
         }
 
-        public List<Aluno> GetAll(string cpf = "")
+        public List<Aluno> GetAll(string nome = "")
+        {
+            List<Aluno> alunos = new List<Aluno>();
+            try
+            {
+                if (string.IsNullOrEmpty(nome))
+                {
+                    alunos = _context.Alunos
+                        .Include(a => a.Usuario)
+                        .Include(a => a.Instituicao)
+                        .ToList();
+                }
+                else
+                {
+                    alunos = _context.Alunos
+                        .Include(a => a.Usuario)
+                        .Include(a => a.Instituicao)
+                        .Where(a => a.Usuario != null && a.Usuario._nome.Contains(nome))
+                        .ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return alunos;
+        }
+
+        public List<Aluno> GetAllByCpf(string cpf = "")
         {
             List<Aluno> alunos = new List<Aluno>();
             try
             {
                 if (string.IsNullOrEmpty(cpf))
                 {
-                    alunos = _context.Alunos.ToList();
+                    alunos = _context.Alunos
+                        .Include(a => a.Usuario)
+                        .Include(a => a.Instituicao)
+                        .ToList();
                 }
                 else
                 {
                     alunos = _context.Alunos
+                        .Include(a => a.Usuario)
+                        .Include(a => a.Instituicao)
                         .Where(a => a._cpf.Contains(cpf))
                         .ToList();
                 }

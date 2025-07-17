@@ -18,7 +18,6 @@ namespace SmartSell.Api.Controllers.Galdino
             _pontoEmbarqueDAO = new PontoEmbarqueDAO(context);
         }
 
-        // GET: api/boarding-points
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetBoardingPoints()
         {
@@ -44,7 +43,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // GET: api/boarding-points/5
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetBoardingPoint(int id)
         {
@@ -75,7 +73,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // POST: api/boarding-points
         [HttpPost]
         public async Task<ActionResult<object>> CreateBoardingPoint([FromBody] JsonElement body)
         {
@@ -125,7 +122,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // PUT: api/boarding-points/5
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdateBoardingPoint(int id, [FromBody] JsonElement body)
         {
@@ -185,7 +181,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // DELETE: api/boarding-points/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBoardingPoint(int id)
         {

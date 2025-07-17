@@ -20,7 +20,6 @@ namespace SmartSell.Api.Controllers.Galdino
             _alunoDAO = new AlunoDAO(context);
         }
 
-        // GET: api/notifications
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetNotifications(
             [FromQuery] string? type = null,
@@ -50,7 +49,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // GET: api/notifications/5
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetNotification(int id)
         {
@@ -77,7 +75,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // POST: api/notifications
         [HttpPost]
         public async Task<ActionResult<object>> CreateNotification([FromBody] JsonElement body)
         {
@@ -129,7 +126,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // PUT: api/notifications/5
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdateNotification(int id, [FromBody] JsonElement body)
         {
@@ -173,7 +169,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // DELETE: api/notifications/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteNotification(int id)
         {
@@ -188,7 +183,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return NoContent();
         }
 
-        // POST: api/notifications/5/mark-read
         [HttpPost("{id}/mark-read")]
         public async Task<ActionResult<object>> MarkAsRead(int id, [FromBody] JsonElement body)
         {

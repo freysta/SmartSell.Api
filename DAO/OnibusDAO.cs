@@ -109,7 +109,7 @@ namespace SmartSell.Api.DAO
             }
         }
 
-        public List<Onibus> GetByStatus(string status)
+        public List<Onibus> GetByStatus(StatusOnibusEnum status)
         {
             try
             {

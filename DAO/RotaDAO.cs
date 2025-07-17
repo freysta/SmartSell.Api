@@ -87,7 +87,7 @@ namespace SmartSell.Api.DAO
             }
         }
 
-        public List<Rota> GetByStatus(string status)
+        public List<Rota> GetByStatus(StatusRotaEnum status)
         {
             try
             {

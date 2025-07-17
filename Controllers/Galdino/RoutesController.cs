@@ -27,9 +27,9 @@ namespace SmartSell.Api.Controllers.Galdino
             {
                 var todasRotas = _rotaDAO.GetAll();
 
-                if (!string.IsNullOrEmpty(status))
+                if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusRotaEnum>(status, out var statusEnum))
                 {
-                    todasRotas = todasRotas.Where(r => r._status == status).ToList();
+                    todasRotas = todasRotas.Where(r => r._status == statusEnum).ToList();
                 }
 
                 var rotas = todasRotas.Select(r => new
@@ -106,10 +106,12 @@ namespace SmartSell.Api.Controllers.Galdino
                 var rota = new Rota
                 {
                     _dataRota = dataRota,
-                    _tipoRota = request.Destination,
+                    _tipoRota = Enum.TryParse<TipoRotaEnum>(request.Destination, out var tipoEnum) ? tipoEnum : TipoRotaEnum.Ida,
                     _horarioSaida = horarioSaida,
-                    _status = request.Status ?? "Ativa",
-                    _motoristaId = request.DriverId
+                    _status = Enum.TryParse<StatusRotaEnum>(request.Status, out var statusEnum) ? statusEnum : StatusRotaEnum.Planejada,
+                    _motoristaId = request.DriverId,
+                    _onibusId = 1, // Valor padrão
+                    _instituicaoId = 1 // Valor padrão
                 };
 
                 _rotaDAO.Create(rota);
@@ -178,8 +180,11 @@ namespace SmartSell.Api.Controllers.Galdino
                     }
                 }
 
-                rota._tipoRota = request.Destination ?? rota._tipoRota;
-                rota._status = request.Status ?? rota._status;
+                if (!string.IsNullOrEmpty(request.Destination) && Enum.TryParse<TipoRotaEnum>(request.Destination, out var tipoEnum))
+                    rota._tipoRota = tipoEnum;
+                
+                if (!string.IsNullOrEmpty(request.Status) && Enum.TryParse<StatusRotaEnum>(request.Status, out var statusEnum))
+                    rota._status = statusEnum;
 
                 _rotaDAO.Update(rota);
 

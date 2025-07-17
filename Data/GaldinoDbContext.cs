@@ -48,6 +48,90 @@ namespace SmartSell.Api.Data
                 .HasIndex(o => o._placa)
                 .IsUnique();
 
+            // Configurar relacionamentos
+            modelBuilder.Entity<Aluno>()
+                .HasOne(a => a.Usuario)
+                .WithMany()
+                .HasForeignKey(a => a._usuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Aluno>()
+                .HasOne(a => a.Instituicao)
+                .WithMany()
+                .HasForeignKey(a => a._instituicaoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Motorista>()
+                .HasOne(m => m.Usuario)
+                .WithMany()
+                .HasForeignKey(m => m._usuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GestorSistema>()
+                .HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(g => g._usuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rota>()
+                .HasOne(r => r.Motorista)
+                .WithMany(m => m.Rotas)
+                .HasForeignKey(r => r._motoristaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rota>()
+                .HasOne(r => r.Onibus)
+                .WithMany(o => o.Rotas)
+                .HasForeignKey(r => r._onibusId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Rota>()
+                .HasOne(r => r.Instituicao)
+                .WithMany()
+                .HasForeignKey(r => r._instituicaoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Pagamento>()
+                .HasOne(p => p.Aluno)
+                .WithMany(a => a.Pagamentos)
+                .HasForeignKey(p => p._alunoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notificacao>()
+                .HasOne<Aluno>()
+                .WithMany()
+                .HasForeignKey(n => n._alunoId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configurar conversões de enum para string
+            modelBuilder.Entity<Aluno>()
+                .Property(a => a._turno)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Rota>()
+                .Property(r => r._tipoRota)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Rota>()
+                .Property(r => r._status)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Pagamento>()
+                .Property(p => p._status)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Pagamento>()
+                .Property(p => p._formaPagamento)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<PontoEmbarque>()
+                .Property(pe => pe._tipoPonto)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Onibus>()
+                .Property(o => o._status)
+                .HasConversion<string>();
+
             SeedData(modelBuilder);
         }
 

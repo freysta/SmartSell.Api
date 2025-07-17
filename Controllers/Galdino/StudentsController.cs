@@ -10,10 +10,12 @@ namespace SmartSell.Api.Controllers.Galdino
     public class StudentsController : ControllerBase
     {
         private readonly AlunoDAO _alunoDAO;
+        private readonly UsuarioDAO _usuarioDAO;
 
         public StudentsController(GaldinoDbContext context)
         {
             _alunoDAO = new AlunoDAO(context);
+            _usuarioDAO = new UsuarioDAO(context);
         }
 
         [HttpGet]
@@ -21,21 +23,37 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var alunos = _alunoDAO.GetAll().Select(a => new
+                var query = _alunoDAO.GetAll().AsQueryable();
+
+                if (!string.IsNullOrEmpty(status))
+                {
+                    bool isActive = status.ToLower() == "ativo";
+                    query = query.Where(a => a.Usuario != null && a.Usuario._ativo == isActive);
+                }
+
+                if (!string.IsNullOrEmpty(route))
+                    query = query.Where(a => a.RotaAlunos.Any(ra => ra._rotaId.ToString() == route));
+
+                var alunos = query.ToList().Select(a => new
                 {
                     id = a._id,
-                    name = "",
-                    email = "",
+                    name = a.Usuario?._nome ?? "",
+                    email = a.Usuario?._email ?? "",
                     phone = a._telefone,
                     cpf = a._cpf,
-                    paymentStatus = (string?)null,
-                    route = (string?)null,
-                    enrollmentDate = (string?)null,
-                    status = "active",
+                    address = a._endereco,
+                    city = a._cidade,
+                    course = a._curso,
+                    shift = ConvertShiftToFrontend(a._turno),
+                    institution = a.Instituicao?._nome,
+                    paymentStatus = CalculatePaymentStatus(a._id),
+                    route = GetStudentRoute(a._id),
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = a.Usuario?._ativo == true ? "Ativo" : "Inativo",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 }).ToList();
 
-                return Ok(new { data = alunos, message = "Alunos listados com sucesso" });
+                return Ok(alunos);
             }
             catch (Exception ex)
             {
@@ -55,18 +73,23 @@ namespace SmartSell.Api.Controllers.Galdino
                 var response = new
                 {
                     id = aluno._id,
-                    name = "",
-                    email = "",
+                    name = aluno.Usuario?._nome ?? "",
+                    email = aluno.Usuario?._email ?? "",
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = (string?)null,
-                    route = (string?)null,
-                    enrollmentDate = (string?)null,
-                    status = "active",
+                    address = aluno._endereco,
+                    city = aluno._cidade,
+                    course = aluno._curso,
+                    shift = ConvertShiftToFrontend(aluno._turno),
+                    institution = aluno.Instituicao?._nome,
+                    paymentStatus = CalculatePaymentStatus(aluno._id),
+                    route = GetStudentRoute(aluno._id),
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = aluno.Usuario?._ativo == true ? "Ativo" : "Inativo",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(new { data = response, message = "Aluno encontrado" });
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -79,21 +102,48 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Remover verificação de email duplicado pois Aluno não tem mais email
-
+                // Validar se CPF já existe
                 var existingCpf = _alunoDAO.GetByCpf(request.Cpf);
-
                 if (existingCpf != null)
                 {
                     return BadRequest(new { message = "CPF já está em uso" });
                 }
 
+                // Validar se email já existe
+                var existingEmail = _usuarioDAO.GetByEmail(request.Email);
+                if (existingEmail != null)
+                {
+                    return BadRequest(new { message = "Email já está em uso" });
+                }
+
+                // Validar campos obrigatórios
+                if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email))
+                {
+                    return BadRequest(new { message = "Nome e email são obrigatórios" });
+                }
+
+                // 1. Primeiro criar o usuário
+                var usuario = new Usuario
+                {
+                    _nome = request.Name,
+                    _email = request.Email,
+                    _senha = BCrypt.Net.BCrypt.HashPassword("TempPass123!"), // Senha temporária
+                    _ativo = true
+                };
+
+                _usuarioDAO.Create(usuario);
+
+                // 2. Depois criar o aluno vinculado ao usuário
                 var aluno = new Aluno
                 {
                     _telefone = request.Phone,
                     _cpf = request.Cpf,
-                    _usuarioId = 1, // Valor padrão
-                    _instituicaoId = 1 // Valor padrão
+                    _endereco = request.Address,
+                    _cidade = request.City,
+                    _curso = request.Course,
+                    _turno = ConvertShiftFromFrontend(request.Shift),
+                    _usuarioId = usuario._id, // ✅ Vinculação correta
+                    _instituicaoId = 1 // TODO: Implementar seleção de instituição
                 };
 
                 _alunoDAO.Create(aluno);
@@ -101,18 +151,22 @@ namespace SmartSell.Api.Controllers.Galdino
                 var response = new
                 {
                     id = aluno._id,
-                    name = request.Name,
-                    email = request.Email,
+                    name = usuario._nome,
+                    email = usuario._email,
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = (string?)null,
+                    address = aluno._endereco,
+                    city = aluno._cidade,
+                    course = aluno._curso,
+                    shift = ConvertShiftToFrontend(aluno._turno),
+                    paymentStatus = "Em dia",
                     route = request.Route,
-                    enrollmentDate = request.EnrollmentDate,
-                    status = "active",
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = "Ativo",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return StatusCode(201, new { data = response, message = "Aluno criado com sucesso" });
+                return StatusCode(201, response);
             }
             catch (Exception ex)
             {
@@ -143,24 +197,32 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 aluno._telefone = request.Phone ?? aluno._telefone;
                 aluno._cpf = request.Cpf ?? aluno._cpf;
+                aluno._endereco = request.Address ?? aluno._endereco;
+                aluno._cidade = request.City ?? aluno._cidade;
+                aluno._curso = request.Course ?? aluno._curso;
+                aluno._turno = ConvertShiftFromFrontend(request.Shift) ?? aluno._turno;
 
                 _alunoDAO.Update(aluno);
 
                 var response = new
                 {
                     id = aluno._id,
-                    name = request.Name ?? "",
-                    email = request.Email ?? "",
+                    name = request.Name ?? aluno.Usuario?._nome ?? "",
+                    email = request.Email ?? aluno.Usuario?._email ?? "",
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
-                    paymentStatus = (string?)null,
-                    route = (string?)null,
-                    enrollmentDate = (string?)null,
-                    status = "active",
+                    address = aluno._endereco,
+                    city = aluno._cidade,
+                    course = aluno._curso,
+                    shift = ConvertShiftToFrontend(aluno._turno),
+                    paymentStatus = CalculatePaymentStatus(aluno._id),
+                    route = GetStudentRoute(aluno._id),
+                    enrollmentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    status = aluno.Usuario?._ativo == true ? "Ativo" : "Inativo",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
-                return Ok(new { data = response, message = "Aluno atualizado com sucesso" });
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -185,6 +247,42 @@ namespace SmartSell.Api.Controllers.Galdino
                 return StatusCode(500, ex.Message);
             }
         }
+
+        private string ConvertShiftToFrontend(TurnoEnum? turno)
+        {
+            return turno switch
+            {
+                TurnoEnum.Matutino => "Manha",
+                TurnoEnum.Vespertino => "Tarde", 
+                TurnoEnum.Noturno => "Noite",
+                TurnoEnum.Integral => "Integral",
+                _ => ""
+            };
+        }
+
+        private TurnoEnum? ConvertShiftFromFrontend(string? shift)
+        {
+            return shift switch
+            {
+                "Manha" => TurnoEnum.Matutino,
+                "Tarde" => TurnoEnum.Vespertino,
+                "Noite" => TurnoEnum.Noturno,
+                "Integral" => TurnoEnum.Integral,
+                _ => null
+            };
+        }
+
+        private string CalculatePaymentStatus(int alunoId)
+        {
+            // TODO: Implementar lógica real de cálculo de status de pagamento
+            return "Em dia";
+        }
+
+        private string? GetStudentRoute(int alunoId)
+        {
+            // TODO: Implementar lógica real para buscar rota do aluno
+            return null;
+        }
     }
 
     public class CreateStudentRequest
@@ -193,6 +291,10 @@ namespace SmartSell.Api.Controllers.Galdino
         public string Email { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Cpf { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? Course { get; set; }
+        public string? Shift { get; set; }
         public string? Route { get; set; }
         public string? EnrollmentDate { get; set; }
     }
@@ -203,5 +305,10 @@ namespace SmartSell.Api.Controllers.Galdino
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Cpf { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? Course { get; set; }
+        public string? Shift { get; set; }
+        public string? Status { get; set; }
     }
 }

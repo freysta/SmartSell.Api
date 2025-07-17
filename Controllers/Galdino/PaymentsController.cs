@@ -20,7 +20,6 @@ namespace SmartSell.Api.Controllers.Galdino
             _alunoDAO = new AlunoDAO(context);
         }
 
-        // GET: api/payments
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetPayments(
             [FromQuery] int? studentId = null,
@@ -32,8 +31,8 @@ namespace SmartSell.Api.Controllers.Galdino
             if (studentId.HasValue)
                 pagamentos = pagamentos.Where(p => p._alunoId == studentId.Value).ToList();
 
-            if (!string.IsNullOrEmpty(status))
-                pagamentos = pagamentos.Where(p => p._status == status).ToList();
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<StatusPagamentoEnum>(status, out var statusEnum))
+                pagamentos = pagamentos.Where(p => p._status == statusEnum).ToList();
 
             if (!string.IsNullOrEmpty(month))
                 pagamentos = pagamentos.Where(p => p._referenciaMes == month).ToList();
@@ -56,7 +55,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // GET: api/payments/5
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetPayment(int id)
         {
@@ -85,7 +83,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return Ok(result);
         }
 
-        // POST: api/payments
         [HttpPost]
         public async Task<ActionResult<object>> CreatePayment([FromBody] JsonElement body)
         {
@@ -96,7 +93,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 var month = body.GetProperty("month").GetString() ?? "";
                 var status = body.GetProperty("status").GetString() ?? "Pendente";
 
-                // Verificar se o aluno existe
                 var aluno = _alunoDAO.GetById(studentId);
                 if (aluno == null)
                 {
@@ -108,12 +104,16 @@ namespace SmartSell.Api.Controllers.Galdino
                     _alunoId = studentId,
                     _valor = amount,
                     _referenciaMes = month,
-                    _status = status,
+                    _status = Enum.TryParse<StatusPagamentoEnum>(status, out var statusEnum) ? statusEnum : StatusPagamentoEnum.Pendente,
                     _dataPagamento = DateTime.Now
                 };
 
                 if (body.TryGetProperty("paymentMethod", out var paymentMethodElement))
-                    pagamento._formaPagamento = paymentMethodElement.GetString();
+                {
+                    var paymentMethodStr = paymentMethodElement.GetString();
+                    if (Enum.TryParse<FormaPagamentoEnum>(paymentMethodStr, out var paymentMethodEnum))
+                        pagamento._formaPagamento = paymentMethodEnum;
+                }
 
                 if (body.TryGetProperty("paymentDate", out var paymentDateElement))
                     pagamento._dataPagamento = paymentDateElement.GetDateTime();
@@ -143,7 +143,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // PUT: api/payments/5
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdatePayment(int id, [FromBody] JsonElement body)
         {
@@ -159,10 +158,18 @@ namespace SmartSell.Api.Controllers.Galdino
                     pagamento._valor = amountElement.GetDecimal();
 
                 if (body.TryGetProperty("status", out var statusElement))
-                    pagamento._status = statusElement.GetString() ?? pagamento._status;
+                {
+                    var statusStr = statusElement.GetString();
+                    if (Enum.TryParse<StatusPagamentoEnum>(statusStr, out var statusEnum))
+                        pagamento._status = statusEnum;
+                }
 
                 if (body.TryGetProperty("paymentMethod", out var paymentMethodElement))
-                    pagamento._formaPagamento = paymentMethodElement.GetString();
+                {
+                    var paymentMethodStr = paymentMethodElement.GetString();
+                    if (Enum.TryParse<FormaPagamentoEnum>(paymentMethodStr, out var paymentMethodEnum))
+                        pagamento._formaPagamento = paymentMethodEnum;
+                }
 
                 if (body.TryGetProperty("paymentDate", out var paymentDateElement))
                     pagamento._dataPagamento = paymentDateElement.GetDateTime();
@@ -192,7 +199,6 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        // DELETE: api/payments/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePayment(int id)
         {
@@ -207,7 +213,6 @@ namespace SmartSell.Api.Controllers.Galdino
             return NoContent();
         }
 
-        // POST: api/payments/5/confirm
         [HttpPost("{id}/confirm")]
         public async Task<ActionResult<object>> ConfirmPayment(int id, [FromBody] JsonElement body)
         {
@@ -220,9 +225,12 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 pagamento._dataPagamento = DateTime.Now;
-                pagamento._formaPagamento = body.TryGetProperty("paymentMethod", out var paymentMethodElement) 
-                    ? paymentMethodElement.GetString() 
-                    : pagamento._formaPagamento;
+                if (body.TryGetProperty("paymentMethod", out var paymentMethodElement))
+                {
+                    var paymentMethodStr = paymentMethodElement.GetString();
+                    if (Enum.TryParse<FormaPagamentoEnum>(paymentMethodStr, out var paymentMethodEnum))
+                        pagamento._formaPagamento = paymentMethodEnum;
+                }
 
                 _pagamentoDAO.Update(pagamento);
 

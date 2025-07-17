@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
+using SmartSell.Api.Models.Galdino;
 
 namespace SmartSell.Api.Controllers.Galdino
 {
@@ -29,14 +30,39 @@ namespace SmartSell.Api.Controllers.Galdino
                 var totalStudents = _alunoDAO.GetAll().Count;
                 var totalDrivers = _usuarioDAO.GetAll().Count;
                 var totalRoutes = _rotaDAO.GetAll().Count;
-                var activeRoutes = _rotaDAO.GetAll().Count(r => r._status == "Ativa");
+                
+                // Buscar rotas ativas de forma segura, tratando possíveis erros de conversão de enum
+                int activeRoutes = 0;
+                try
+                {
+                    var rotas = _rotaDAO.GetAll();
+                    activeRoutes = rotas.Count(r => r._status == StatusRotaEnum.Planejada || r._status == StatusRotaEnum.EmAndamento);
+                }
+                catch (Exception)
+                {
+                    // Se houver erro de conversão de enum, contar todas as rotas como fallback
+                    activeRoutes = totalRoutes;
+                }
 
-                var pendingPayments = _pagamentoDAO.GetAll().Count(p => p._status == "Pendente");
-                var monthlyRevenue = _pagamentoDAO.GetAll()
-                    .Where(p => p._status == "Pago" && 
-                               p._dataPagamento.Month == DateTime.Now.Month &&
-                               p._dataPagamento.Year == DateTime.Now.Year)
-                    .Sum(p => (double)p._valor);
+                // Buscar pagamentos pendentes de forma segura
+                int pendingPayments = 0;
+                double monthlyRevenue = 0;
+                try
+                {
+                    var pagamentos = _pagamentoDAO.GetAll();
+                    pendingPayments = pagamentos.Count(p => p._status == StatusPagamentoEnum.Pendente);
+                    monthlyRevenue = pagamentos
+                        .Where(p => p._status == StatusPagamentoEnum.Pago && 
+                                   p._dataPagamento.Month == DateTime.Now.Month &&
+                                   p._dataPagamento.Year == DateTime.Now.Year)
+                        .Sum(p => (double)p._valor);
+                }
+                catch (Exception)
+                {
+                    // Se houver erro, usar valores padrão
+                    pendingPayments = 0;
+                    monthlyRevenue = 0;
+                }
 
                 var stats = new
                 {

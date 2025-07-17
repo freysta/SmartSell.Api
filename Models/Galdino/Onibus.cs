@@ -3,6 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
+    public enum StatusOnibusEnum
+    {
+        Ativo,
+        Manutenção,
+        Inativo
+    }
+
     [Table("Onibus")]
     public class Onibus
     {
@@ -11,19 +18,28 @@ namespace SmartSell.Api.Models.Galdino
         public int _id { get; set; }
         
         [Column("placa")]
+        [Required]
+        [StringLength(10)]
         public string _placa { get; set; } = string.Empty;
         
         [Column("modelo")]
+        [Required]
+        [StringLength(50)]
         public string _modelo { get; set; } = string.Empty;
         
         [Column("capacidade")]
+        [Required]
         public int _capacidade { get; set; }
         
         [Column("ano")]
+        [Required]
         public int _ano { get; set; }
         
         [Column("status")]
-        public string _status { get; set; } = "Ativo";
+        public StatusOnibusEnum _status { get; set; } = StatusOnibusEnum.Ativo;
+
+        // Navigation Properties
+        public virtual ICollection<Rota> Rotas { get; set; } = new List<Rota>();
 
         public Onibus()
         {
