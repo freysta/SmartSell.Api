@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 using System.Text.Json;
@@ -10,11 +11,15 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/[controller]")]
     public class AttendanceController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly PresencaDAO _presencaDAO;
+        private readonly AlunoDAO _alunoDAO;
+        private readonly RotaDAO _rotaDAO;
 
         public AttendanceController(GaldinoDbContext context)
         {
-            _context = context;
+            _presencaDAO = new PresencaDAO(context);
+            _alunoDAO = new AlunoDAO(context);
+            _rotaDAO = new RotaDAO(context);
         }
 
         // GET: api/attendance
@@ -23,30 +28,25 @@ namespace SmartSell.Api.Controllers.Galdino
             [FromQuery] int? studentId = null,
             [FromQuery] int? routeId = null)
         {
-            var query = _context.Presencas
-                .Include(p => p.Aluno)
-                .Include(p => p.Rota)
-                .AsQueryable();
+            var presencas = _presencaDAO.GetAll();
 
             if (studentId.HasValue)
-                query = query.Where(p => p._studentId == studentId.Value);
+                presencas = presencas.Where(p => p._alunoId == studentId.Value).ToList();
 
             if (routeId.HasValue)
-                query = query.Where(p => p._routeId == routeId.Value);
-
-            var presencas = await query.OrderByDescending(p => p._date).ToListAsync();
+                presencas = presencas.Where(p => p._rotaId == routeId.Value).ToList();
 
             var result = presencas.Select(p => new
             {
                 id = p._id,
-                routeId = p._routeId,
-                studentId = p._studentId,
-                studentName = p.Aluno?._nome ?? "N/A",
-                routeName = p.Rota?._destino ?? "N/A",
-                status = p._status,
-                observation = p._observation,
-                date = p._date.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                createdAt = p._createdAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                routeId = p._rotaId,
+                studentId = p._alunoId,
+                studentName = "N/A",
+                routeName = "N/A",
+                status = p._presente,
+                observation = p._observacao,
+                date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
             });
 
             return Ok(result);
@@ -56,10 +56,7 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetAttendance(int id)
         {
-            var presenca = await _context.Presencas
-                .Include(p => p.Aluno)
-                .Include(p => p.Rota)
-                .FirstOrDefaultAsync(p => p._id == id);
+            var presenca = _presencaDAO.GetById(id);
 
             if (presenca == null)
             {
@@ -69,14 +66,14 @@ namespace SmartSell.Api.Controllers.Galdino
             var result = new
             {
                 id = presenca._id,
-                routeId = presenca._routeId,
-                studentId = presenca._studentId,
-                studentName = presenca.Aluno?._nome ?? "N/A",
-                routeName = presenca.Rota?._destino ?? "N/A",
-                status = presenca._status,
-                observation = presenca._observation,
-                date = presenca._date.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                createdAt = presenca._createdAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                routeId = presenca._rotaId,
+                studentId = presenca._alunoId,
+                studentName = "N/A",
+                routeName = "N/A",
+                status = presenca._presente,
+                observation = presenca._observacao,
+                date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
             };
 
             return Ok(result);
@@ -94,74 +91,41 @@ namespace SmartSell.Api.Controllers.Galdino
                 var observation = body.TryGetProperty("observation", out var obsElement) ? obsElement.GetString() : null;
 
                 // Verificar se o aluno existe
-                var aluno = await _context.Alunos.FindAsync(studentId);
+                var aluno = _alunoDAO.GetById(studentId);
                 if (aluno == null)
                 {
                     return BadRequest(new { error = new { message = "Aluno não encontrado", code = "STUDENT_NOT_FOUND" } });
                 }
 
                 // Verificar se a rota existe
-                var rota = await _context.Rotas.FindAsync(routeId);
+                var rota = _rotaDAO.GetById(routeId);
                 if (rota == null)
                 {
                     return BadRequest(new { error = new { message = "Rota não encontrada", code = "ROUTE_NOT_FOUND" } });
                 }
 
-                // Verificar se já existe presença para hoje
-                var hoje = DateTime.Today;
-                var presencaExistente = await _context.Presencas
-                    .FirstOrDefaultAsync(p => p._studentId == studentId && 
-                                            p._routeId == routeId && 
-                                            p._date.Date == hoje);
-
-                if (presencaExistente != null)
-                {
-                    // Atualizar presença existente
-                    presencaExistente._status = status;
-                    presencaExistente._observation = observation;
-                    await _context.SaveChangesAsync();
-
-                    var resultUpdate = new
-                    {
-                        id = presencaExistente._id,
-                        routeId = presencaExistente._routeId,
-                        studentId = presencaExistente._studentId,
-                        studentName = aluno._nome,
-                        routeName = rota._destino,
-                        status = presencaExistente._status,
-                        observation = presencaExistente._observation,
-                        date = presencaExistente._date.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                        createdAt = presencaExistente._createdAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
-                    };
-
-                    return Ok(resultUpdate);
-                }
-
                 // Criar nova presença
                 var presenca = new Presenca
                 {
-                    _routeId = routeId,
-                    _studentId = studentId,
-                    _status = status,
-                    _observation = observation,
-                    _date = DateTime.Now,
-                    _createdAt = DateTime.Now
+                    _rotaId = routeId,
+                    _alunoId = studentId,
+                    _presente = status,
+                    _observacao = observation
                 };
 
-                _context.Presencas.Add(presenca);
-                await _context.SaveChangesAsync();
+                _presencaDAO.Create(presenca);
 
                 var result = new
                 {
                     id = presenca._id,
-                    routeId = presenca._routeId,
-                    studentId = presenca._studentId,
-                    studentName = aluno._nome,
-                    routeName = rota._destino,
-                    status = presenca._status,
-                    observation = presenca._observation,
-                    date = presenca._date.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    createdAt = presenca._createdAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    routeId = presenca._rotaId,
+                    studentId = presenca._alunoId,
+                    studentName = "N/A",
+                    routeName = "N/A",
+                    status = presenca._presente,
+                    observation = presenca._observacao,
+                    date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
                 return CreatedAtAction(nameof(GetAttendance), new { id = presenca._id }, result);
@@ -176,10 +140,7 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdateAttendance(int id, [FromBody] JsonElement body)
         {
-            var presenca = await _context.Presencas
-                .Include(p => p.Aluno)
-                .Include(p => p.Rota)
-                .FirstOrDefaultAsync(p => p._id == id);
+            var presenca = _presencaDAO.GetById(id);
 
             if (presenca == null)
             {
@@ -189,24 +150,24 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 if (body.TryGetProperty("status", out var statusElement))
-                    presenca._status = statusElement.GetString() ?? presenca._status;
+                    presenca._presente = statusElement.GetString() ?? presenca._presente;
 
                 if (body.TryGetProperty("observation", out var observationElement))
-                    presenca._observation = observationElement.GetString();
+                    presenca._observacao = observationElement.GetString();
 
-                await _context.SaveChangesAsync();
+                _presencaDAO.Update(presenca);
 
                 var result = new
                 {
                     id = presenca._id,
-                    routeId = presenca._routeId,
-                    studentId = presenca._studentId,
-                    studentName = presenca.Aluno?._nome ?? "N/A",
-                    routeName = presenca.Rota?._destino ?? "N/A",
-                    status = presenca._status,
-                    observation = presenca._observation,
-                    date = presenca._date.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    createdAt = presenca._createdAt.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    routeId = presenca._rotaId,
+                    studentId = presenca._alunoId,
+                    studentName = "N/A",
+                    routeName = "N/A",
+                    status = presenca._presente,
+                    observation = presenca._observacao,
+                    date = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
                 return Ok(result);
@@ -221,14 +182,13 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAttendance(int id)
         {
-            var presenca = await _context.Presencas.FindAsync(id);
+            var presenca = _presencaDAO.GetById(id);
             if (presenca == null)
             {
                 return NotFound(new { error = new { message = "Registro de presença não encontrado", code = "ATTENDANCE_NOT_FOUND" } });
             }
 
-            _context.Presencas.Remove(presenca);
-            await _context.SaveChangesAsync();
+            _presencaDAO.Delete(id);
 
             return NoContent();
         }
@@ -237,25 +197,25 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpGet("student/{studentId}/summary")]
         public async Task<ActionResult<object>> GetStudentAttendanceSummary(int studentId)
         {
-            var aluno = await _context.Alunos.FindAsync(studentId);
+            var aluno = _alunoDAO.GetById(studentId);
             if (aluno == null)
             {
                 return NotFound(new { error = new { message = "Aluno não encontrado", code = "STUDENT_NOT_FOUND" } });
             }
 
-            var presencas = await _context.Presencas
-                .Where(p => p._studentId == studentId)
-                .ToListAsync();
+            var presencas = _presencaDAO.GetAll()
+                .Where(p => p._alunoId == studentId)
+                .ToList();
 
             var totalPresencas = presencas.Count;
-            var presentes = presencas.Count(p => p._status == "present");
-            var ausentes = presencas.Count(p => p._status == "absent");
+            var presentes = presencas.Count(p => p._presente == "Sim");
+            var ausentes = presencas.Count(p => p._presente == "Não");
             var percentualPresenca = totalPresencas > 0 ? (double)presentes / totalPresencas * 100 : 0;
 
             var result = new
             {
                 studentId = studentId,
-                studentName = aluno._nome,
+                studentName = "N/A",
                 totalRecords = totalPresencas,
                 present = presentes,
                 absent = ausentes,

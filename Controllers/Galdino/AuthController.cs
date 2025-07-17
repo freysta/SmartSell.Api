@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 using SmartSell.Api.Services;
@@ -9,12 +10,12 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly UsuarioDAO _usuarioDAO;
         private readonly JwtService _jwtService;
 
         public AuthController(GaldinoDbContext context, JwtService jwtService)
         {
-            _context = context;
+            _usuarioDAO = new UsuarioDAO(context);
             _jwtService = jwtService;
         }
 
@@ -23,15 +24,14 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var usuario = _context.Usuarios
-                    .FirstOrDefault(u => u._email == request.Email);
+                var usuario = _usuarioDAO.GetByEmail(request.Email);
 
                 if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario._senha))
                 {
                     return Unauthorized(new { message = "Credenciais inválidas" });
                 }
 
-                var token = _jwtService.GenerateToken(usuario._id, usuario._email, usuario._tipo);
+                var token = _jwtService.GenerateToken(usuario._id, usuario._email, "Usuario");
                 var refreshToken = _jwtService.GenerateRefreshToken();
 
                 var response = new
@@ -41,8 +41,8 @@ namespace SmartSell.Api.Controllers.Galdino
                         id = usuario._id,
                         name = usuario._nome,
                         email = usuario._email,
-                        phone = usuario._telefone,
-                        role = usuario._tipo.ToLower(),
+                        phone = "",
+                        role = "usuario",
                         status = "active"
                     },
                     token = token,
@@ -74,13 +74,13 @@ namespace SmartSell.Api.Controllers.Galdino
                     return BadRequest(new { message = "Refresh token inválido" });
                 }
 
-                var usuario = _context.Usuarios.FirstOrDefault(u => u._id == request.UserId);
+                var usuario = _usuarioDAO.GetById(request.UserId);
                 if (usuario == null)
                 {
                     return NotFound(new { message = "Usuário não encontrado" });
                 }
 
-                var newToken = _jwtService.GenerateToken(usuario._id, usuario._email, usuario._tipo);
+                var newToken = _jwtService.GenerateToken(usuario._id, usuario._email, "Usuario");
                 var newRefreshToken = _jwtService.GenerateRefreshToken();
 
                 var response = new
@@ -102,8 +102,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var usuario = _context.Usuarios
-                    .FirstOrDefault(u => u._email == request.Email);
+                var usuario = _usuarioDAO.GetByEmail(request.Email);
 
                 if (usuario == null)
                 {

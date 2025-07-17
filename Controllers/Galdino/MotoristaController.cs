@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,11 +9,11 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("motorista")]
     public class MotoristaController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly UsuarioDAO _usuarioDAO;
 
         public MotoristaController(GaldinoDbContext context)
         {
-            _context = context;
+            _usuarioDAO = new UsuarioDAO(context);
         }
 
         [HttpGet]
@@ -20,9 +21,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motoristas = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista")
-                    .ToList();
+                var motoristas = _usuarioDAO.GetAll();
                 return Ok(motoristas);
             }
             catch (KeyNotFoundException ex)
@@ -44,9 +43,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motorista = _usuarioDAO.GetById(id);
                 
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
@@ -72,11 +69,9 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                motorista._tipo = "Motorista";
                 motorista._senha = BCrypt.Net.BCrypt.HashPassword(motorista._senha);
                 
-                _context.Usuarios.Add(motorista);
-                _context.SaveChanges();
+                _usuarioDAO.Create(motorista);
                 return Ok(motorista);
             }
             catch (KeyNotFoundException ex)
@@ -98,23 +93,20 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motoristaExistente = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motoristaExistente = _usuarioDAO.GetById(id);
                 
                 if (motoristaExistente == null)
                     return NotFound("Motorista não encontrado");
 
                 motoristaExistente._nome = motorista._nome;
                 motoristaExistente._email = motorista._email;
-                motoristaExistente._telefone = motorista._telefone;
                 
                 if (!string.IsNullOrEmpty(motorista._senha))
                 {
                     motoristaExistente._senha = BCrypt.Net.BCrypt.HashPassword(motorista._senha);
                 }
 
-                _context.SaveChanges();
+                _usuarioDAO.Update(motoristaExistente);
                 return Ok(motoristaExistente);
             }
             catch (KeyNotFoundException ex)
@@ -136,15 +128,12 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motorista = _usuarioDAO.GetById(id);
                 
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
-                _context.Usuarios.Remove(motorista);
-                _context.SaveChanges();
+                _usuarioDAO.Delete(id);
                 return Ok("Motorista removido com sucesso");
             }
             catch (KeyNotFoundException ex)

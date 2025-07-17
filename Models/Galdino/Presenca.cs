@@ -3,40 +3,45 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Presencas")]
+    [Table("Presenca")]
     public class Presenca
     {
         [Key]
+        [Column("id_presenca")]
         public int _id { get; set; }
         
-        public int _routeId { get; set; }
+        [Column("fk_id_rota")]
+        public int _rotaId { get; set; }
         
-        public int _studentId { get; set; }
+        [Column("fk_id_aluno")]
+        public int _alunoId { get; set; }
         
-        public string _status { get; set; } = string.Empty; 
+        [Column("fk_id_ponto")]
+        public int _pontoId { get; set; }
         
-        public string? _observation { get; set; }
+        [Column("presente")]
+        public string _presente { get; set; } = string.Empty;
         
-        public DateTime _date { get; set; } = DateTime.Now;
+        [Column("horario_embarque")]
+        public TimeSpan? _horarioEmbarque { get; set; }
         
-        public DateTime _createdAt { get; set; } = DateTime.Now;
+        [Column("horario_desembarque")]
+        public TimeSpan? _horarioDesembarque { get; set; }
+        
+        [Column("observacao")]
+        public string? _observacao { get; set; }
 
-        public Presenca() { }
-
-        public Presenca(int routeId, int studentId, string status, string? observation = null)
+        public Presenca()
         {
-            _routeId = routeId;
-            _studentId = studentId;
-            _status = status;
-            _observation = observation;
-            _date = DateTime.Now;
-            _createdAt = DateTime.Now;
         }
 
-        [ForeignKey("_routeId")]
-        public virtual Rota? Rota { get; set; }
-
-        [ForeignKey("_studentId")]
-        public virtual Aluno? Aluno { get; set; }
+        public Presenca(int id, int rotaId, int alunoId, int pontoId, string presente)
+        {
+            _id = id;
+            _rotaId = rotaId;
+            _alunoId = alunoId;
+            _pontoId = pontoId;
+            _presente = presente;
+        }
     }
 }

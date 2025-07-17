@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 using System.Text.Json;
@@ -7,14 +8,16 @@ using System.Text.Json;
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/payments")]
     public class PaymentsController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly PagamentoDAO _pagamentoDAO;
+        private readonly AlunoDAO _alunoDAO;
 
         public PaymentsController(GaldinoDbContext context)
         {
-            _context = context;
+            _pagamentoDAO = new PagamentoDAO(context);
+            _alunoDAO = new AlunoDAO(context);
         }
 
         // GET: api/payments
@@ -24,30 +27,30 @@ namespace SmartSell.Api.Controllers.Galdino
             [FromQuery] string? status = null,
             [FromQuery] string? month = null)
         {
-            var query = _context.Pagamentos.AsQueryable();
+            var pagamentos = _pagamentoDAO.GetAll();
 
             if (studentId.HasValue)
-                query = query.Where(p => p._studentId == studentId.Value);
+                pagamentos = pagamentos.Where(p => p._alunoId == studentId.Value).ToList();
 
             if (!string.IsNullOrEmpty(status))
-                query = query.Where(p => p._status == status);
+                pagamentos = pagamentos.Where(p => p._status == status).ToList();
 
             if (!string.IsNullOrEmpty(month))
-                query = query.Where(p => p._month == month);
-
-            var pagamentos = await query.ToListAsync();
+                pagamentos = pagamentos.Where(p => p._referenciaMes == month).ToList();
 
             var result = pagamentos.Select(p => new
             {
                 id = p._id,
-                studentId = p._studentId,
-                amount = p._amount,
-                month = p._month,
-                year = p._year,
+                studentId = p._alunoId,
+                studentName = "N/A",
+                amount = p._valor,
+                month = p._referenciaMes,
+                year = DateTime.Now.Year,
                 status = p._status,
-                paymentMethod = p._paymentMethod,
-                paymentDate = p._paymentDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                dueDate = p._dueDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                paymentMethod = p._formaPagamento,
+                paymentDate = p._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                dueDate = p._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
             });
 
             return Ok(result);
@@ -57,7 +60,7 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetPayment(int id)
         {
-            var pagamento = await _context.Pagamentos.FindAsync(id);
+            var pagamento = _pagamentoDAO.GetById(id);
 
             if (pagamento == null)
             {
@@ -67,14 +70,16 @@ namespace SmartSell.Api.Controllers.Galdino
             var result = new
             {
                 id = pagamento._id,
-                studentId = pagamento._studentId,
-                amount = pagamento._amount,
-                month = pagamento._month,
-                year = pagamento._year,
+                studentId = pagamento._alunoId,
+                studentName = "N/A",
+                amount = pagamento._valor,
+                month = pagamento._referenciaMes,
+                year = DateTime.Now.Year,
                 status = pagamento._status,
-                paymentMethod = pagamento._paymentMethod,
-                paymentDate = pagamento._paymentDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                dueDate = pagamento._dueDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                paymentMethod = pagamento._formaPagamento,
+                paymentDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                dueDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
             };
 
             return Ok(result);
@@ -86,37 +91,48 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
+                var studentId = body.GetProperty("studentId").GetInt32();
+                var amount = body.GetProperty("amount").GetDecimal();
+                var month = body.GetProperty("month").GetString() ?? "";
+                var status = body.GetProperty("status").GetString() ?? "Pendente";
+
+                // Verificar se o aluno existe
+                var aluno = _alunoDAO.GetById(studentId);
+                if (aluno == null)
+                {
+                    return BadRequest(new { error = new { message = "Aluno não encontrado", code = "STUDENT_NOT_FOUND" } });
+                }
+
                 var pagamento = new Pagamento
                 {
-                    _studentId = body.GetProperty("studentId").GetInt32(),
-                    _amount = body.GetProperty("amount").GetDecimal(),
-                    _month = body.GetProperty("month").GetString() ?? "",
-                    _year = body.GetProperty("year").GetInt32(),
-                    _status = body.GetProperty("status").GetString() ?? "pending",
-                    _dueDate = DateTime.Parse(body.GetProperty("dueDate").GetString() ?? DateTime.Now.AddDays(30).ToString()),
-                    _createdAt = DateTime.Now
+                    _alunoId = studentId,
+                    _valor = amount,
+                    _referenciaMes = month,
+                    _status = status,
+                    _dataPagamento = DateTime.Now
                 };
 
                 if (body.TryGetProperty("paymentMethod", out var paymentMethodElement))
-                    pagamento._paymentMethod = paymentMethodElement.GetString();
+                    pagamento._formaPagamento = paymentMethodElement.GetString();
 
                 if (body.TryGetProperty("paymentDate", out var paymentDateElement))
-                    pagamento._paymentDate = DateTime.Parse(paymentDateElement.GetString() ?? "");
+                    pagamento._dataPagamento = paymentDateElement.GetDateTime();
 
-                _context.Pagamentos.Add(pagamento);
-                await _context.SaveChangesAsync();
+                _pagamentoDAO.Create(pagamento);
 
                 var result = new
                 {
                     id = pagamento._id,
-                    studentId = pagamento._studentId,
-                    amount = pagamento._amount,
-                    month = pagamento._month,
-                    year = pagamento._year,
+                    studentId = pagamento._alunoId,
+                    studentName = "N/A",
+                    amount = pagamento._valor,
+                    month = pagamento._referenciaMes,
+                    year = DateTime.Now.Year,
                     status = pagamento._status,
-                    paymentMethod = pagamento._paymentMethod,
-                    paymentDate = pagamento._paymentDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    dueDate = pagamento._dueDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    paymentMethod = pagamento._formaPagamento,
+                    paymentDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    dueDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
                 return CreatedAtAction(nameof(GetPayment), new { id = pagamento._id }, result);
@@ -131,7 +147,7 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpPut("{id}")]
         public async Task<ActionResult<object>> UpdatePayment(int id, [FromBody] JsonElement body)
         {
-            var pagamento = await _context.Pagamentos.FindAsync(id);
+            var pagamento = _pagamentoDAO.GetById(id);
             if (pagamento == null)
             {
                 return NotFound(new { error = new { message = "Pagamento não encontrado", code = "PAYMENT_NOT_FOUND" } });
@@ -140,33 +156,32 @@ namespace SmartSell.Api.Controllers.Galdino
             try
             {
                 if (body.TryGetProperty("amount", out var amountElement))
-                    pagamento._amount = amountElement.GetDecimal();
+                    pagamento._valor = amountElement.GetDecimal();
 
                 if (body.TryGetProperty("status", out var statusElement))
                     pagamento._status = statusElement.GetString() ?? pagamento._status;
 
                 if (body.TryGetProperty("paymentMethod", out var paymentMethodElement))
-                    pagamento._paymentMethod = paymentMethodElement.GetString();
+                    pagamento._formaPagamento = paymentMethodElement.GetString();
 
                 if (body.TryGetProperty("paymentDate", out var paymentDateElement))
-                    pagamento._paymentDate = DateTime.Parse(paymentDateElement.GetString() ?? "");
+                    pagamento._dataPagamento = paymentDateElement.GetDateTime();
 
-                if (body.TryGetProperty("dueDate", out var dueDateElement))
-                    pagamento._dueDate = DateTime.Parse(dueDateElement.GetString() ?? pagamento._dueDate.ToString());
-
-                await _context.SaveChangesAsync();
+                _pagamentoDAO.Update(pagamento);
 
                 var result = new
                 {
                     id = pagamento._id,
-                    studentId = pagamento._studentId,
-                    amount = pagamento._amount,
-                    month = pagamento._month,
-                    year = pagamento._year,
+                    studentId = pagamento._alunoId,
+                    studentName = "N/A",
+                    amount = pagamento._valor,
+                    month = pagamento._referenciaMes,
+                    year = DateTime.Now.Year,
                     status = pagamento._status,
-                    paymentMethod = pagamento._paymentMethod,
-                    paymentDate = pagamento._paymentDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    dueDate = pagamento._dueDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    paymentMethod = pagamento._formaPagamento,
+                    paymentDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    dueDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
                 return Ok(result);
@@ -177,51 +192,61 @@ namespace SmartSell.Api.Controllers.Galdino
             }
         }
 
-        [HttpPatch("{id}/mark-paid")]
-        public async Task<ActionResult<object>> MarkPaymentAsPaid(int id)
-        {
-            var pagamento = await _context.Pagamentos.FindAsync(id);
-            if (pagamento == null)
-            {
-                return NotFound(new { error = new { message = "Pagamento não encontrado", code = "PAYMENT_NOT_FOUND" } });
-            }
-
-            pagamento._status = "paid";
-            pagamento._paymentDate = DateTime.Now;
-            pagamento._paymentMethod = pagamento._paymentMethod ?? "PIX";
-
-            await _context.SaveChangesAsync();
-
-            var result = new
-            {
-                id = pagamento._id,
-                studentId = pagamento._studentId,
-                amount = pagamento._amount,
-                month = pagamento._month,
-                year = pagamento._year,
-                status = pagamento._status,
-                paymentMethod = pagamento._paymentMethod,
-                paymentDate = pagamento._paymentDate?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                dueDate = pagamento._dueDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
-            };
-
-            return Ok(result);
-        }
-
         // DELETE: api/payments/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePayment(int id)
         {
-            var pagamento = await _context.Pagamentos.FindAsync(id);
+            var pagamento = _pagamentoDAO.GetById(id);
             if (pagamento == null)
             {
                 return NotFound(new { error = new { message = "Pagamento não encontrado", code = "PAYMENT_NOT_FOUND" } });
             }
 
-            _context.Pagamentos.Remove(pagamento);
-            await _context.SaveChangesAsync();
+            _pagamentoDAO.Delete(id);
 
             return NoContent();
+        }
+
+        // POST: api/payments/5/confirm
+        [HttpPost("{id}/confirm")]
+        public async Task<ActionResult<object>> ConfirmPayment(int id, [FromBody] JsonElement body)
+        {
+            var pagamento = _pagamentoDAO.GetById(id);
+            if (pagamento == null)
+            {
+                return NotFound(new { error = new { message = "Pagamento não encontrado", code = "PAYMENT_NOT_FOUND" } });
+            }
+
+            try
+            {
+                pagamento._dataPagamento = DateTime.Now;
+                pagamento._formaPagamento = body.TryGetProperty("paymentMethod", out var paymentMethodElement) 
+                    ? paymentMethodElement.GetString() 
+                    : pagamento._formaPagamento;
+
+                _pagamentoDAO.Update(pagamento);
+
+                var result = new
+                {
+                    id = pagamento._id,
+                    studentId = pagamento._alunoId,
+                    studentName = "N/A",
+                    amount = pagamento._valor,
+                    month = pagamento._referenciaMes,
+                    year = DateTime.Now.Year,
+                    status = pagamento._status,
+                    paymentMethod = pagamento._formaPagamento,
+                    paymentDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    dueDate = pagamento._dataPagamento.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = new { message = "Erro ao confirmar pagamento", code = "CONFIRMATION_ERROR", details = ex.Message } });
+            }
         }
     }
 }

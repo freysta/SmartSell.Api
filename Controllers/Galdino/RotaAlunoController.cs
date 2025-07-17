@@ -21,19 +21,16 @@ namespace SmartSell.Api.Controllers.Galdino
         public async Task<ActionResult<IEnumerable<RotaAlunoResponseDto>>> GetRotaAlunos()
         {
             var rotaAlunos = await _context.RotaAlunos
-                .Include(ra => ra.Aluno)
-                .Include(ra => ra.Rota)
-                .Include(ra => ra.PontoEmbarque)
                 .Select(ra => new RotaAlunoResponseDto
                 {
                     Id = ra._id,
-                    FkIdRota = ra._fkIdRota,
-                    FkIdAluno = ra._fkIdAluno,
-                    FkIdPonto = ra._fkIdPonto,
+                    FkIdRota = ra._rotaId,
+                    FkIdAluno = ra._alunoId,
+                    FkIdPonto = ra._pontoId,
                     Confirmado = ra._confirmado,
-                    NomeAluno = ra.Aluno != null ? ra.Aluno._nome : null,
-                    DestinoRota = ra.Rota != null ? ra.Rota._destino : null,
-                    NomePonto = ra.PontoEmbarque != null ? ra.PontoEmbarque._name : null
+                    NomeAluno = "",
+                    DestinoRota = "",
+                    NomePonto = ""
                 })
                 .ToListAsync();
 
@@ -44,20 +41,17 @@ namespace SmartSell.Api.Controllers.Galdino
         public async Task<ActionResult<RotaAlunoResponseDto>> GetRotaAluno(int id)
         {
             var rotaAluno = await _context.RotaAlunos
-                .Include(ra => ra.Aluno)
-                .Include(ra => ra.Rota)
-                .Include(ra => ra.PontoEmbarque)
                 .Where(ra => ra._id == id)
                 .Select(ra => new RotaAlunoResponseDto
                 {
                     Id = ra._id,
-                    FkIdRota = ra._fkIdRota,
-                    FkIdAluno = ra._fkIdAluno,
-                    FkIdPonto = ra._fkIdPonto,
+                    FkIdRota = ra._rotaId,
+                    FkIdAluno = ra._alunoId,
+                    FkIdPonto = ra._pontoId,
                     Confirmado = ra._confirmado,
-                    NomeAluno = ra.Aluno != null ? ra.Aluno._nome : null,
-                    DestinoRota = ra.Rota != null ? ra.Rota._destino : null,
-                    NomePonto = ra.PontoEmbarque != null ? ra.PontoEmbarque._name : null
+                    NomeAluno = "",
+                    DestinoRota = "",
+                    NomePonto = ""
                 })
                 .FirstOrDefaultAsync();
 
@@ -73,18 +67,16 @@ namespace SmartSell.Api.Controllers.Galdino
         public async Task<ActionResult<IEnumerable<RotaAlunoResponseDto>>> GetAlunosByRota(int rotaId)
         {
             var rotaAlunos = await _context.RotaAlunos
-                .Include(ra => ra.Aluno)
-                .Include(ra => ra.PontoEmbarque)
-                .Where(ra => ra._fkIdRota == rotaId)
+                .Where(ra => ra._rotaId == rotaId)
                 .Select(ra => new RotaAlunoResponseDto
                 {
                     Id = ra._id,
-                    FkIdRota = ra._fkIdRota,
-                    FkIdAluno = ra._fkIdAluno,
-                    FkIdPonto = ra._fkIdPonto,
+                    FkIdRota = ra._rotaId,
+                    FkIdAluno = ra._alunoId,
+                    FkIdPonto = ra._pontoId,
                     Confirmado = ra._confirmado,
-                    NomeAluno = ra.Aluno != null ? ra.Aluno._nome : null,
-                    NomePonto = ra.PontoEmbarque != null ? ra.PontoEmbarque._name : null
+                    NomeAluno = "",
+                    NomePonto = ""
                 })
                 .ToListAsync();
 
@@ -95,18 +87,16 @@ namespace SmartSell.Api.Controllers.Galdino
         public async Task<ActionResult<IEnumerable<RotaAlunoResponseDto>>> GetRotasByAluno(int alunoId)
         {
             var rotaAlunos = await _context.RotaAlunos
-                .Include(ra => ra.Rota)
-                .Include(ra => ra.PontoEmbarque)
-                .Where(ra => ra._fkIdAluno == alunoId)
+                .Where(ra => ra._alunoId == alunoId)
                 .Select(ra => new RotaAlunoResponseDto
                 {
                     Id = ra._id,
-                    FkIdRota = ra._fkIdRota,
-                    FkIdAluno = ra._fkIdAluno,
-                    FkIdPonto = ra._fkIdPonto,
+                    FkIdRota = ra._rotaId,
+                    FkIdAluno = ra._alunoId,
+                    FkIdPonto = ra._pontoId,
                     Confirmado = ra._confirmado,
-                    DestinoRota = ra.Rota != null ? ra.Rota._destino : null,
-                    NomePonto = ra.PontoEmbarque != null ? ra.PontoEmbarque._name : null
+                    DestinoRota = "",
+                    NomePonto = ""
                 })
                 .ToListAsync();
 
@@ -118,9 +108,9 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             var rotaAluno = new RotaAluno
             {
-                _fkIdRota = dto.FkIdRota,
-                _fkIdAluno = dto.FkIdAluno,
-                _fkIdPonto = dto.FkIdPonto,
+                _rotaId = dto.FkIdRota,
+                _alunoId = dto.FkIdAluno,
+                _pontoId = dto.FkIdPonto,
                 _confirmado = dto.Confirmado
             };
 
@@ -128,20 +118,17 @@ namespace SmartSell.Api.Controllers.Galdino
             await _context.SaveChangesAsync();
 
             var response = await _context.RotaAlunos
-                .Include(ra => ra.Aluno)
-                .Include(ra => ra.Rota)
-                .Include(ra => ra.PontoEmbarque)
                 .Where(ra => ra._id == rotaAluno._id)
                 .Select(ra => new RotaAlunoResponseDto
                 {
                     Id = ra._id,
-                    FkIdRota = ra._fkIdRota,
-                    FkIdAluno = ra._fkIdAluno,
-                    FkIdPonto = ra._fkIdPonto,
+                    FkIdRota = ra._rotaId,
+                    FkIdAluno = ra._alunoId,
+                    FkIdPonto = ra._pontoId,
                     Confirmado = ra._confirmado,
-                    NomeAluno = ra.Aluno != null ? ra.Aluno._nome : null,
-                    DestinoRota = ra.Rota != null ? ra.Rota._destino : null,
-                    NomePonto = ra.PontoEmbarque != null ? ra.PontoEmbarque._name : null
+                    NomeAluno = "",
+                    DestinoRota = "",
+                    NomePonto = ""
                 })
                 .FirstOrDefaultAsync();
 
@@ -157,9 +144,9 @@ namespace SmartSell.Api.Controllers.Galdino
                 return NotFound();
             }
 
-            rotaAluno._fkIdRota = dto.FkIdRota;
-            rotaAluno._fkIdAluno = dto.FkIdAluno;
-            rotaAluno._fkIdPonto = dto.FkIdPonto;
+            rotaAluno._rotaId = dto.FkIdRota;
+            rotaAluno._alunoId = dto.FkIdAluno;
+            rotaAluno._pontoId = dto.FkIdPonto;
             rotaAluno._confirmado = dto.Confirmado;
 
             try

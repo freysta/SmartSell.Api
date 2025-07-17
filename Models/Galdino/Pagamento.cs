@@ -3,44 +3,46 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Pagamentos")]
+    [Table("Pagamento")]
     public class Pagamento
     {
         [Key]
+        [Column("id_pagamento")]
         public int _id { get; set; }
         
-        public int _studentId { get; set; }
+        [Column("fk_id_aluno")]
+        public int _alunoId { get; set; }
         
-        public decimal _amount { get; set; }
+        [Column("valor")]
+        public decimal _valor { get; set; }
         
-        public string _month { get; set; } = string.Empty;
+        [Column("data_pagamento")]
+        public DateTime _dataPagamento { get; set; }
         
-        public int _year { get; set; }
+        [Column("referencia_mes")]
+        public string _referenciaMes { get; set; } = string.Empty;
         
-        public string _status { get; set; } = string.Empty; 
+        [Column("status")]
+        public string _status { get; set; } = string.Empty;
         
-        public string? _paymentMethod { get; set; }
+        [Column("forma_pagamento")]
+        public string? _formaPagamento { get; set; }
         
-        public DateTime? _paymentDate { get; set; }
-        
-        public DateTime _dueDate { get; set; }
-        
-        public DateTime _createdAt { get; set; } = DateTime.Now;
+        [Column("comprovante")]
+        public byte[]? _comprovante { get; set; }
 
-        public Pagamento() { }
-
-        public Pagamento(int studentId, decimal amount, string month, int year, string status, DateTime dueDate)
+        public Pagamento()
         {
-            _studentId = studentId;
-            _amount = amount;
-            _month = month;
-            _year = year;
-            _status = status;
-            _dueDate = dueDate;
-            _createdAt = DateTime.Now;
         }
 
-        [ForeignKey("_studentId")]
-        public virtual Aluno? Aluno { get; set; }
+        public Pagamento(int id, int alunoId, decimal valor, DateTime dataPagamento, string referenciaMes, string status)
+        {
+            _id = id;
+            _alunoId = alunoId;
+            _valor = valor;
+            _dataPagamento = dataPagamento;
+            _referenciaMes = referenciaMes;
+            _status = status;
+        }
     }
 }

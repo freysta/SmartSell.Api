@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,11 +9,15 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/routes")]
     public class RoutesController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly RotaDAO _rotaDAO;
+        private readonly UsuarioDAO _usuarioDAO;
+        private readonly RotaAlunoDAO _rotaAlunoDAO;
 
         public RoutesController(GaldinoDbContext context)
         {
-            _context = context;
+            _rotaDAO = new RotaDAO(context);
+            _usuarioDAO = new UsuarioDAO(context);
+            _rotaAlunoDAO = new RotaAlunoDAO(context);
         }
 
         [HttpGet]
@@ -20,25 +25,22 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var query = _context.Rotas.AsQueryable();
+                var todasRotas = _rotaDAO.GetAll();
 
                 if (!string.IsNullOrEmpty(status))
                 {
-                    query = query.Where(r => r._status == status);
+                    todasRotas = todasRotas.Where(r => r._status == status).ToList();
                 }
 
-                var rotas = query.Select(r => new
+                var rotas = todasRotas.Select(r => new
                 {
                     id = r._id,
                     date = r._dataRota.ToString("yyyy-MM-dd"),
-                    destination = r._destino,
+                    destination = r._tipoRota,
                     departureTime = r._horarioSaida.ToString(@"hh\:mm"),
                     status = r._status,
-                    driverId = r._fkIdMotorista,
-                    driverName = _context.Usuarios
-                        .Where(u => u._id == r._fkIdMotorista)
-                        .Select(u => u._nome)
-                        .FirstOrDefault(),
+                    driverId = r._motoristaId,
+                    driverName = _usuarioDAO.GetById(r._motoristaId)?._nome ?? "N/A",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 }).ToList();
 
@@ -55,7 +57,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var rota = _context.Rotas.Find(id);
+                var rota = _rotaDAO.GetById(id);
                 if (rota == null)
                     return NotFound(new { message = "Rota não encontrada" });
 
@@ -63,14 +65,11 @@ namespace SmartSell.Api.Controllers.Galdino
                 {
                     id = rota._id,
                     date = rota._dataRota.ToString("yyyy-MM-dd"),
-                    destination = rota._destino,
+                    destination = rota._tipoRota,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
                     status = rota._status,
-                    driverId = rota._fkIdMotorista,
-                    driverName = _context.Usuarios
-                        .Where(u => u._id == rota._fkIdMotorista)
-                        .Select(u => u._nome)
-                        .FirstOrDefault(),
+                    driverId = rota._motoristaId,
+                    driverName = _usuarioDAO.GetById(rota._motoristaId)?._nome ?? "N/A",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
@@ -87,8 +86,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .FirstOrDefault(u => u._id == request.DriverId && u._tipo == "Motorista");
+                var motorista = _usuarioDAO.GetById(request.DriverId);
 
                 if (motorista == null)
                 {
@@ -108,23 +106,22 @@ namespace SmartSell.Api.Controllers.Galdino
                 var rota = new Rota
                 {
                     _dataRota = dataRota,
-                    _destino = request.Destination,
+                    _tipoRota = request.Destination,
                     _horarioSaida = horarioSaida,
                     _status = request.Status ?? "Ativa",
-                    _fkIdMotorista = request.DriverId
+                    _motoristaId = request.DriverId
                 };
 
-                _context.Rotas.Add(rota);
-                _context.SaveChanges();
+                _rotaDAO.Create(rota);
 
                 var response = new
                 {
                     id = rota._id,
                     date = rota._dataRota.ToString("yyyy-MM-dd"),
-                    destination = rota._destino,
+                    destination = rota._tipoRota,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
                     status = rota._status,
-                    driverId = rota._fkIdMotorista,
+                    driverId = rota._motoristaId,
                     driverName = motorista._nome,
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -142,20 +139,19 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var rota = _context.Rotas.Find(id);
+                var rota = _rotaDAO.GetById(id);
                 if (rota == null)
                     return NotFound(new { message = "Rota não encontrada" });
 
                 if (request.DriverId.HasValue)
                 {
-                    var motorista = _context.Usuarios
-                        .FirstOrDefault(u => u._id == request.DriverId && u._tipo == "Motorista");
+                    var motorista = _usuarioDAO.GetById(request.DriverId.Value);
 
                     if (motorista == null)
                     {
                         return BadRequest(new { message = "Motorista não encontrado" });
                     }
-                    rota._fkIdMotorista = request.DriverId.Value;
+                    rota._motoristaId = request.DriverId.Value;
                 }
 
                 if (!string.IsNullOrEmpty(request.Date))
@@ -182,23 +178,20 @@ namespace SmartSell.Api.Controllers.Galdino
                     }
                 }
 
-                rota._destino = request.Destination ?? rota._destino;
+                rota._tipoRota = request.Destination ?? rota._tipoRota;
                 rota._status = request.Status ?? rota._status;
 
-                _context.SaveChanges();
+                _rotaDAO.Update(rota);
 
                 var response = new
                 {
                     id = rota._id,
                     date = rota._dataRota.ToString("yyyy-MM-dd"),
-                    destination = rota._destino,
+                    destination = rota._tipoRota,
                     departureTime = rota._horarioSaida.ToString(@"hh\:mm"),
                     status = rota._status,
-                    driverId = rota._fkIdMotorista,
-                    driverName = _context.Usuarios
-                        .Where(u => u._id == rota._fkIdMotorista)
-                        .Select(u => u._nome)
-                        .FirstOrDefault(),
+                    driverId = rota._motoristaId,
+                    driverName = _usuarioDAO.GetById(rota._motoristaId)?._nome ?? "N/A",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
 
@@ -215,12 +208,17 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var rota = _context.Rotas.Find(id);
+                var rota = _rotaDAO.GetById(id);
                 if (rota == null)
                     return NotFound(new { message = "Rota não encontrada" });
 
-                _context.Rotas.Remove(rota);
-                _context.SaveChanges();
+                var alunosAssociados = _rotaAlunoDAO.GetByRota(id).Any();
+                if (alunosAssociados)
+                {
+                    return BadRequest(new { message = "Não é possível excluir rota com alunos associados" });
+                }
+
+                _rotaDAO.Delete(id);
                 return Ok(new { message = "Rota removida com sucesso" });
             }
             catch (Exception ex)

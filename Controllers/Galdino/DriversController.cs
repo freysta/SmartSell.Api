@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,11 +9,13 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/drivers")]
     public class DriversController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly UsuarioDAO _usuarioDAO;
+        private readonly RotaDAO _rotaDAO;
 
         public DriversController(GaldinoDbContext context)
         {
-            _context = context;
+            _usuarioDAO = new UsuarioDAO(context);
+            _rotaDAO = new RotaDAO(context);
         }
 
         [HttpGet]
@@ -20,14 +23,13 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motoristas = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista")
+                var motoristas = _usuarioDAO.GetAll()
                     .Select(m => new
                     {
                         id = m._id,
                         name = m._nome,
                         email = m._email,
-                        phone = m._telefone,
+                        phone = (string?)null,
                         cnh = (string?)null,
                         vehicle = (string?)null,
                         licenseExpiry = (string?)null,
@@ -48,9 +50,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motorista = _usuarioDAO.GetById(id);
 
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
@@ -60,7 +60,7 @@ namespace SmartSell.Api.Controllers.Galdino
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = motorista._telefone,
+                    phone = (string?)null,
                     cnh = (string?)null,
                     vehicle = (string?)null,
                     licenseExpiry = (string?)null,
@@ -81,8 +81,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var existingUser = _context.Usuarios
-                    .FirstOrDefault(u => u._email == request.Email);
+                var existingUser = _usuarioDAO.GetByEmail(request.Email);
 
                 if (existingUser != null)
                 {
@@ -93,20 +92,17 @@ namespace SmartSell.Api.Controllers.Galdino
                 {
                     _nome = request.Name,
                     _email = request.Email,
-                    _telefone = request.Phone,
-                    _senha = BCrypt.Net.BCrypt.HashPassword(request.Password ?? "TempPass123!"),
-                    _tipo = "Motorista"
+                    _senha = BCrypt.Net.BCrypt.HashPassword(request.Password ?? "TempPass123!")
                 };
 
-                _context.Usuarios.Add(motorista);
-                _context.SaveChanges();
+                _usuarioDAO.Create(motorista);
 
                 var response = new
                 {
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = motorista._telefone,
+                    phone = (string?)null,
                     cnh = request.Cnh,
                     vehicle = request.Vehicle,
                     licenseExpiry = request.LicenseExpiry,
@@ -127,19 +123,16 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motorista = _usuarioDAO.GetById(id);
 
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
                 if (!string.IsNullOrEmpty(request.Email) && request.Email != motorista._email)
                 {
-                    var existingUser = _context.Usuarios
-                        .FirstOrDefault(u => u._email == request.Email && u._id != id);
+                    var existingUser = _usuarioDAO.GetByEmail(request.Email);
 
-                    if (existingUser != null)
+                    if (existingUser != null && existingUser._id != id)
                     {
                         return BadRequest(new { message = "Email já está em uso" });
                     }
@@ -147,16 +140,15 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 motorista._nome = request.Name ?? motorista._nome;
                 motorista._email = request.Email ?? motorista._email;
-                motorista._telefone = request.Phone ?? motorista._telefone;
 
-                _context.SaveChanges();
+                _usuarioDAO.Update(motorista);
 
                 var response = new
                 {
                     id = motorista._id,
                     name = motorista._nome,
                     email = motorista._email,
-                    phone = motorista._telefone,
+                    phone = (string?)null,
                     cnh = request.Cnh,
                     vehicle = request.Vehicle,
                     licenseExpiry = request.LicenseExpiry,
@@ -177,24 +169,20 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var motorista = _context.Usuarios
-                    .Where(u => u._tipo == "Motorista" && u._id == id)
-                    .FirstOrDefault();
+                var motorista = _usuarioDAO.GetById(id);
 
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
-                var rotasAssociadas = _context.Rotas
-                    .Where(r => r._fkIdMotorista == id)
-                    .Any();
+                var rotasAssociadas = _rotaDAO.GetAll()
+                    .Any(r => r._motoristaId == id);
 
                 if (rotasAssociadas)
                 {
                     return BadRequest(new { message = "Não é possível excluir motorista com rotas associadas" });
                 }
 
-                _context.Usuarios.Remove(motorista);
-                _context.SaveChanges();
+                _usuarioDAO.Delete(id);
                 return Ok(new { message = "Motorista removido com sucesso" });
             }
             catch (Exception ex)

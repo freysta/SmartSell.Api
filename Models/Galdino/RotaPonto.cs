@@ -3,38 +3,38 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("RotaAlunos")]
-    public class RotaAluno
+    [Table("RotaPonto")]
+    public class RotaPonto
     {
         [Key]
-        [Column("id_rota_aluno")]
+        [Column("id_rota_ponto")]
         public int _id { get; set; }
         
         [Column("fk_id_rota")]
         public int _rotaId { get; set; }
         
-        [Column("fk_id_aluno")]
-        public int _alunoId { get; set; }
-        
         [Column("fk_id_ponto")]
         public int _pontoId { get; set; }
         
-        [Column("confirmado")]
-        public string _confirmado { get; set; } = "Não";
+        [Column("ordem")]
+        public int _ordem { get; set; }
         
-        [Column("data_confirmacao")]
-        public DateTime? _dataConfirmacao { get; set; }
+        [Column("horario_previsto")]
+        public TimeSpan? _horarioPrevisto { get; set; }
+        
+        [Column("horario_real")]
+        public TimeSpan? _horarioReal { get; set; }
 
-        public RotaAluno()
+        public RotaPonto()
         {
         }
 
-        public RotaAluno(int id, int rotaId, int alunoId, int pontoId)
+        public RotaPonto(int id, int rotaId, int pontoId, int ordem)
         {
             _id = id;
             _rotaId = rotaId;
-            _alunoId = alunoId;
             _pontoId = pontoId;
+            _ordem = ordem;
         }
     }
 }

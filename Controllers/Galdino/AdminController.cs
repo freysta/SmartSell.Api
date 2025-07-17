@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,11 +9,11 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/admin")]
     public class AdminController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly UsuarioDAO _usuarioDAO;
 
         public AdminController(GaldinoDbContext context)
         {
-            _context = context;
+            _usuarioDAO = new UsuarioDAO(context);
         }
 
         [HttpPost("create-admin")]
@@ -20,8 +21,7 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var existingUser = _context.Usuarios
-                    .FirstOrDefault(u => u._email == request.Email);
+                var existingUser = _usuarioDAO.GetByEmail(request.Email);
 
                 if (existingUser != null)
                 {
@@ -33,20 +33,18 @@ namespace SmartSell.Api.Controllers.Galdino
                     _nome = request.Name,
                     _email = request.Email,
                     _senha = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    _tipo = "Admin",
-                    _telefone = request.Phone
+                    _ativo = true
                 };
 
-                _context.Usuarios.Add(admin);
-                _context.SaveChanges();
+                _usuarioDAO.Create(admin);
 
                 var response = new
                 {
                     id = admin._id,
                     name = admin._nome,
                     email = admin._email,
-                    phone = admin._telefone,
-                    role = admin._tipo,
+                    phone = request.Phone ?? "",
+                    role = "Admin",
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                     message = "Administrador criado com sucesso"
@@ -65,15 +63,16 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var admins = _context.Usuarios
-                    .Where(u => u._tipo == "Admin")
+                var usuarios = _usuarioDAO.GetAll();
+                var admins = usuarios
+                    .Where(u => u._ativo == true)
                     .Select(a => new
                     {
                         id = a._id,
                         name = a._nome,
                         email = a._email,
-                        phone = a._telefone,
-                        role = a._tipo,
+                        phone = "",
+                        role = "Admin",
                         status = "active",
                         createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                     }).ToList();
@@ -91,16 +90,9 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var existingAdmin = _context.Usuarios
-                    .FirstOrDefault(u => u._tipo == "Admin");
+                // Remover verificação de primeiro admin
 
-                if (existingAdmin != null)
-                {
-                    return BadRequest("Já existe um administrador no sistema. Use o endpoint /create-admin");
-                }
-
-                var existingUser = _context.Usuarios
-                    .FirstOrDefault(u => u._email == request.Email);
+                var existingUser = _usuarioDAO.GetByEmail(request.Email);
 
                 if (existingUser != null)
                 {
@@ -112,20 +104,18 @@ namespace SmartSell.Api.Controllers.Galdino
                     _nome = request.Name,
                     _email = request.Email,
                     _senha = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                    _tipo = "Admin",
-                    _telefone = request.Phone
+                    _ativo = true
                 };
 
-                _context.Usuarios.Add(admin);
-                _context.SaveChanges();
+                _usuarioDAO.Create(admin);
 
                 var response = new
                 {
                     id = admin._id,
                     name = admin._nome,
                     email = admin._email,
-                    phone = admin._telefone,
-                    role = admin._tipo,
+                    phone = request.Phone ?? "",
+                    role = "Admin",
                     status = "active",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                     message = "Primeiro administrador criado com sucesso"

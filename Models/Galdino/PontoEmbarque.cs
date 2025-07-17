@@ -3,41 +3,54 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("PontosEmbarque")]
+    [Table("PontoEmbarque")]
     public class PontoEmbarque
     {
         [Key]
+        [Column("id_ponto")]
         public int _id { get; set; }
         
-        public string _name { get; set; } = string.Empty;
+        [Column("nome")]
+        public string _nome { get; set; } = string.Empty;
         
-        public string _address { get; set; } = string.Empty;
+        [Column("rua")]
+        public string? _rua { get; set; }
         
-        public string _neighborhood { get; set; } = string.Empty;
+        [Column("bairro")]
+        public string? _bairro { get; set; }
         
-        public string _city { get; set; } = string.Empty;
+        [Column("cidade")]
+        public string? _cidade { get; set; }
         
-        public double? _lat { get; set; }
+        [Column("ponto_referencia")]
+        public string? _pontoReferencia { get; set; }
         
-        public double? _lng { get; set; }
+        [Column("tipo_ponto")]
+        public string _tipoPonto { get; set; } = "Ambos";
         
-        public string _status { get; set; } = string.Empty;
+        [Column("horario_previsto")]
+        public TimeSpan? _horarioPrevisto { get; set; }
         
-        public string? _routes { get; set; }
+        [Column("latitude")]
+        public decimal? _latitude { get; set; }
         
-        public DateTime _createdAt { get; set; } = DateTime.Now;
+        [Column("longitude")]
+        public decimal? _longitude { get; set; }
+        
+        [Column("ordem_ida")]
+        public int? _ordemIda { get; set; }
+        
+        [Column("ordem_volta")]
+        public int? _ordemVolta { get; set; }
 
-        public PontoEmbarque() { }
-
-        public PontoEmbarque(string name, string address, string neighborhood, string city, string status)
+        public PontoEmbarque()
         {
-            _name = name;
-            _address = address;
-            _neighborhood = neighborhood;
-            _city = city;
-            _status = status;
-            _createdAt = DateTime.Now;
-            _routes = "[]";
+        }
+
+        public PontoEmbarque(int id, string nome)
+        {
+            _id = id;
+            _nome = nome;
         }
     }
 }

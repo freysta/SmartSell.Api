@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,28 +9,20 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("aluno")]
     public class AlunoController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly AlunoDAO _alunoDAO;
 
         public AlunoController(GaldinoDbContext context)
         {
-            _context = context;
+            _alunoDAO = new AlunoDAO(context);
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAll(string nome = "")
         {
             try
             {
-                var alunos = _context.Alunos.ToList();
+                var alunos = _alunoDAO.GetAll(nome);
                 return Ok(alunos);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -42,19 +35,11 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var aluno = _context.Alunos.Find(id);
+                var aluno = _alunoDAO.GetById(id);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
                 
                 return Ok(aluno);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
@@ -67,17 +52,8 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                _context.Alunos.Add(aluno);
-                _context.SaveChanges();
-                return Ok(aluno);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                var novoAluno = _alunoDAO.Create(aluno);
+                return Ok(novoAluno);
             }
             catch (Exception ex)
             {
@@ -90,25 +66,9 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var alunoExistente = _context.Alunos.Find(id);
-                if (alunoExistente == null)
-                    return NotFound("Aluno não encontrado");
-
-                alunoExistente._nome = aluno._nome;
-                alunoExistente._email = aluno._email;
-                alunoExistente._telefone = aluno._telefone;
-                alunoExistente._cpf = aluno._cpf;
-
-                _context.SaveChanges();
-                return Ok(alunoExistente);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                aluno._id = id;
+                var alunoAtualizado = _alunoDAO.Update(aluno);
+                return Ok(alunoAtualizado);
             }
             catch (Exception ex)
             {
@@ -121,21 +81,28 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var aluno = _context.Alunos.Find(id);
+                var sucesso = _alunoDAO.Delete(id);
+                if (sucesso)
+                    return Ok("Aluno removido com sucesso");
+                else
+                    return NotFound("Aluno não encontrado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("cpf/{cpf}")]
+        public IActionResult GetByCpf(string cpf)
+        {
+            try
+            {
+                var aluno = _alunoDAO.GetByCpf(cpf);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
-
-                _context.Alunos.Remove(aluno);
-                _context.SaveChanges();
-                return Ok("Aluno removido com sucesso");
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
+                
+                return Ok(aluno);
             }
             catch (Exception ex)
             {

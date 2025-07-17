@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 using SmartSell.Api.Models.Galdino;
 
@@ -8,11 +9,11 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/students")]
     public class StudentsController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly AlunoDAO _alunoDAO;
 
         public StudentsController(GaldinoDbContext context)
         {
-            _context = context;
+            _alunoDAO = new AlunoDAO(context);
         }
 
         [HttpGet]
@@ -20,21 +21,11 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var query = _context.Alunos.AsQueryable();
-
-                if (!string.IsNullOrEmpty(status))
-                {
-                }
-
-                if (!string.IsNullOrEmpty(route))
-                {
-                }
-
-                var alunos = query.Select(a => new
+                var alunos = _alunoDAO.GetAll().Select(a => new
                 {
                     id = a._id,
-                    name = a._nome,
-                    email = a._email,
+                    name = "",
+                    email = "",
                     phone = a._telefone,
                     cpf = a._cpf,
                     paymentStatus = (string?)null,
@@ -57,15 +48,15 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var aluno = _context.Alunos.Find(id);
+                var aluno = _alunoDAO.GetById(id);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
 
                 var response = new
                 {
                     id = aluno._id,
-                    name = aluno._nome,
-                    email = aluno._email,
+                    name = "",
+                    email = "",
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
                     paymentStatus = (string?)null,
@@ -88,16 +79,9 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var existingStudent = _context.Alunos
-                    .FirstOrDefault(a => a._email == request.Email);
+                // Remover verificação de email duplicado pois Aluno não tem mais email
 
-                if (existingStudent != null)
-                {
-                    return BadRequest(new { message = "Email já está em uso" });
-                }
-
-                var existingCpf = _context.Alunos
-                    .FirstOrDefault(a => a._cpf == request.Cpf);
+                var existingCpf = _alunoDAO.GetByCpf(request.Cpf);
 
                 if (existingCpf != null)
                 {
@@ -106,20 +90,19 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 var aluno = new Aluno
                 {
-                    _nome = request.Name,
-                    _email = request.Email,
                     _telefone = request.Phone,
-                    _cpf = request.Cpf
+                    _cpf = request.Cpf,
+                    _usuarioId = 1, // Valor padrão
+                    _instituicaoId = 1 // Valor padrão
                 };
 
-                _context.Alunos.Add(aluno);
-                _context.SaveChanges();
+                _alunoDAO.Create(aluno);
 
                 var response = new
                 {
                     id = aluno._id,
-                    name = aluno._nome,
-                    email = aluno._email,
+                    name = request.Name,
+                    email = request.Email,
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
                     paymentStatus = (string?)null,
@@ -142,44 +125,32 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var aluno = _context.Alunos.Find(id);
+                var aluno = _alunoDAO.GetById(id);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
 
-                if (!string.IsNullOrEmpty(request.Email) && request.Email != aluno._email)
-                {
-                    var existingEmail = _context.Alunos
-                        .FirstOrDefault(a => a._email == request.Email && a._id != id);
-
-                    if (existingEmail != null)
-                    {
-                        return BadRequest(new { message = "Email já está em uso" });
-                    }
-                }
+                // Remover verificação de email pois Aluno não tem mais email
 
                 if (!string.IsNullOrEmpty(request.Cpf) && request.Cpf != aluno._cpf)
                 {
-                    var existingCpf = _context.Alunos
-                        .FirstOrDefault(a => a._cpf == request.Cpf && a._id != id);
+                    var existingCpf = _alunoDAO.GetByCpf(request.Cpf);
 
-                    if (existingCpf != null)
+                    if (existingCpf != null && existingCpf._id != id)
                     {
                         return BadRequest(new { message = "CPF já está em uso" });
                     }
                 }
 
-                aluno._nome = request.Name ?? aluno._nome;
-                aluno._email = request.Email ?? aluno._email;
                 aluno._telefone = request.Phone ?? aluno._telefone;
                 aluno._cpf = request.Cpf ?? aluno._cpf;
 
-                _context.SaveChanges();
+                _alunoDAO.Update(aluno);
 
                 var response = new
                 {
                     id = aluno._id,
-                    name = aluno._nome,
-                    email = aluno._email,
+                    name = request.Name ?? "",
+                    email = request.Email ?? "",
                     phone = aluno._telefone,
                     cpf = aluno._cpf,
                     paymentStatus = (string?)null,
@@ -202,12 +173,11 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var aluno = _context.Alunos.Find(id);
+                var aluno = _alunoDAO.GetById(id);
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
 
-                _context.Alunos.Remove(aluno);
-                _context.SaveChanges();
+                _alunoDAO.Delete(id);
                 return Ok(new { message = "Aluno removido com sucesso" });
             }
             catch (Exception ex)

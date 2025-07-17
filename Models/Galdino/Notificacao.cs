@@ -3,39 +3,40 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("Notificacoes")]
+    [Table("Notificacao")]
     public class Notificacao
     {
         [Key]
+        [Column("id_notificacao")]
         public int _id { get; set; }
         
-        public string _title { get; set; } = string.Empty;
+        [Column("titulo")]
+        public string? _titulo { get; set; }
         
-        public string _message { get; set; } = string.Empty;
+        [Column("mensagem")]
+        public string _mensagem { get; set; } = string.Empty;
         
-        public string _type { get; set; } = string.Empty;
+        [Column("data_envio")]
+        public DateTime _dataEnvio { get; set; } = DateTime.Now;
         
-        public string _priority { get; set; } = string.Empty;
+        [Column("tipo")]
+        public string _tipo { get; set; } = "Informativo";
         
-        public string _targetType { get; set; } = string.Empty;
+        [Column("lida")]
+        public bool _lida { get; set; } = false;
         
-        public string? _targetIds { get; set; }
-        
-        public DateTime _createdAt { get; set; } = DateTime.Now;
-        
-        public string? _readBy { get; set; }
+        [Column("fk_id_aluno")]
+        public int? _alunoId { get; set; }
 
-        public Notificacao() { }
-
-        public Notificacao(string title, string message, string type, string priority, string targetType)
+        public Notificacao()
         {
-            _title = title;
-            _message = message;
-            _type = type;
-            _priority = priority;
-            _targetType = targetType;
-            _createdAt = DateTime.Now;
-            _readBy = "[]";
+        }
+
+        public Notificacao(int id, string mensagem, string tipo)
+        {
+            _id = id;
+            _mensagem = mensagem;
+            _tipo = tipo;
         }
     }
 }

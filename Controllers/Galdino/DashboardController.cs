@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SmartSell.Api.DAO;
 using SmartSell.Api.Data;
 
 namespace SmartSell.Api.Controllers.Galdino
@@ -7,11 +8,17 @@ namespace SmartSell.Api.Controllers.Galdino
     [Route("api/dashboard")]
     public class DashboardController : ControllerBase
     {
-        private readonly GaldinoDbContext _context;
+        private readonly AlunoDAO _alunoDAO;
+        private readonly UsuarioDAO _usuarioDAO;
+        private readonly RotaDAO _rotaDAO;
+        private readonly PagamentoDAO _pagamentoDAO;
 
         public DashboardController(GaldinoDbContext context)
         {
-            _context = context;
+            _alunoDAO = new AlunoDAO(context);
+            _usuarioDAO = new UsuarioDAO(context);
+            _rotaDAO = new RotaDAO(context);
+            _pagamentoDAO = new PagamentoDAO(context);
         }
 
         [HttpGet("stats")]
@@ -19,17 +26,17 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var totalStudents = _context.Alunos.Count();
-                var totalDrivers = _context.Usuarios.Count(u => u._tipo == "Motorista");
-                var totalRoutes = _context.Rotas.Count();
-                var activeRoutes = _context.Rotas.Count(r => r._status == "Ativa");
+                var totalStudents = _alunoDAO.GetAll().Count;
+                var totalDrivers = _usuarioDAO.GetAll().Count;
+                var totalRoutes = _rotaDAO.GetAll().Count;
+                var activeRoutes = _rotaDAO.GetAll().Count(r => r._status == "Ativa");
 
-                var pendingPayments = _context.Pagamentos.Count(p => p._status == "pending");
-                var monthlyRevenue = _context.Pagamentos
-                    .Where(p => p._status == "paid" && p._paymentDate.HasValue && 
-                               p._paymentDate.Value.Month == DateTime.Now.Month &&
-                               p._paymentDate.Value.Year == DateTime.Now.Year)
-                    .Sum(p => (double)p._amount);
+                var pendingPayments = _pagamentoDAO.GetAll().Count(p => p._status == "Pendente");
+                var monthlyRevenue = _pagamentoDAO.GetAll()
+                    .Where(p => p._status == "Pago" && 
+                               p._dataPagamento.Month == DateTime.Now.Month &&
+                               p._dataPagamento.Year == DateTime.Now.Year)
+                    .Sum(p => (double)p._valor);
 
                 var stats = new
                 {
