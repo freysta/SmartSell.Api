@@ -97,11 +97,9 @@ namespace SmartSell.Api.Data
                 .HasForeignKey(p => p._alunoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Configuração da tabela Notificacao sem relacionamento navegacional
             modelBuilder.Entity<Notificacao>()
-                .HasOne<Aluno>()
-                .WithMany()
-                .HasForeignKey(n => n._alunoId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .ToTable("Notificacao");
 
             // Configurar conversões de enum para string
             modelBuilder.Entity<Aluno>()
@@ -114,7 +112,10 @@ namespace SmartSell.Api.Data
 
             modelBuilder.Entity<Rota>()
                 .Property(r => r._status)
-                .HasConversion<string>();
+                .HasConversion(
+                    v => v.ToString(),
+                    v => ConvertStringToStatusRotaEnum(v)
+                );
 
             modelBuilder.Entity<Pagamento>()
                 .Property(p => p._status)
@@ -133,6 +134,18 @@ namespace SmartSell.Api.Data
                 .HasConversion<string>();
 
             SeedData(modelBuilder);
+        }
+
+        private static StatusRotaEnum ConvertStringToStatusRotaEnum(string value)
+        {
+            return value switch
+            {
+                "Em andamento" => StatusRotaEnum.EmAndamento,
+                "Planejada" => StatusRotaEnum.Planejada,
+                "Concluida" => StatusRotaEnum.Concluida,
+                "Cancelada" => StatusRotaEnum.Cancelada,
+                _ => Enum.TryParse<StatusRotaEnum>(value, true, out var result) ? result : StatusRotaEnum.Planejada
+            };
         }
 
         private void SeedData(ModelBuilder modelBuilder)

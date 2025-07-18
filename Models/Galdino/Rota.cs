@@ -15,7 +15,7 @@ namespace SmartSell.Api.Models.Galdino
         Planejada,
         [Display(Name = "Em andamento")]
         EmAndamento,
-        Concluída,
+        Concluida,
         Cancelada
     }
 

@@ -109,3 +109,6 @@ FINAL_*.md
 *.http
 database_seed.sql
 logs/
+COMPARACAO_ARQUITETURA.md
+DATABASE_ANALYSIS.md
+TODOS_OS_ENDPOINTS_API.md
