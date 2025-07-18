@@ -48,7 +48,6 @@ namespace SmartSell.Api.Data
                 .HasIndex(o => o._placa)
                 .IsUnique();
 
-            // Configurar relacionamentos
             modelBuilder.Entity<Aluno>()
                 .HasOne(a => a.Usuario)
                 .WithMany()
@@ -97,11 +96,11 @@ namespace SmartSell.Api.Data
                 .HasForeignKey(p => p._alunoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configuração da tabela Notificacao sem relacionamento navegacional
             modelBuilder.Entity<Notificacao>()
-                .ToTable("Notificacao");
+                .ToTable("Notificacao")
+                .Property(n => n._alunoId)
+                .HasColumnName("fk_id_aluno");
 
-            // Configurar conversões de enum para string
             modelBuilder.Entity<Aluno>()
                 .Property(a => a._turno)
                 .HasConversion<string>();

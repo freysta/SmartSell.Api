@@ -102,38 +102,33 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar se CPF já existe
                 var existingCpf = _alunoDAO.GetByCpf(request.Cpf);
                 if (existingCpf != null)
                 {
                     return BadRequest(new { message = "CPF já está em uso" });
                 }
 
-                // Validar se email já existe
                 var existingEmail = _usuarioDAO.GetByEmail(request.Email);
                 if (existingEmail != null)
                 {
                     return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                // Validar campos obrigatórios
                 if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email))
                 {
                     return BadRequest(new { message = "Nome e email são obrigatórios" });
                 }
 
-                // 1. Primeiro criar o usuário
                 var usuario = new Usuario
                 {
                     _nome = request.Name,
                     _email = request.Email,
-                    _senha = BCrypt.Net.BCrypt.HashPassword("TempPass123!"), // Senha temporária
+                    _senha = BCrypt.Net.BCrypt.HashPassword("TempPass123!"),
                     _ativo = true
                 };
 
                 _usuarioDAO.Create(usuario);
 
-                // 2. Depois criar o aluno vinculado ao usuário
                 var aluno = new Aluno
                 {
                     _telefone = request.Phone,
@@ -142,8 +137,8 @@ namespace SmartSell.Api.Controllers.Galdino
                     _cidade = request.City,
                     _curso = request.Course,
                     _turno = ConvertShiftFromFrontend(request.Shift),
-                    _usuarioId = usuario._id, // ✅ Vinculação correta
-                    _instituicaoId = 1 // TODO: Implementar seleção de instituição
+                    _usuarioId = usuario._id,
+                    _instituicaoId = 1
                 };
 
                 _alunoDAO.Create(aluno);
@@ -183,7 +178,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (aluno == null)
                     return NotFound("Aluno não encontrado");
 
-                // Remover verificação de email pois Aluno não tem mais email
 
                 if (!string.IsNullOrEmpty(request.Cpf) && request.Cpf != aluno._cpf)
                 {
@@ -274,13 +268,11 @@ namespace SmartSell.Api.Controllers.Galdino
 
         private string CalculatePaymentStatus(int alunoId)
         {
-            // TODO: Implementar lógica real de cálculo de status de pagamento
             return "Em dia";
         }
 
         private string? GetStudentRoute(int alunoId)
         {
-            // TODO: Implementar lógica real para buscar rota do aluno
             return null;
         }
     }

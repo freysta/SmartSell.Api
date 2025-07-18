@@ -114,14 +114,12 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar campos obrigatórios
-                if (string.IsNullOrEmpty(request.Placa) || string.IsNullOrEmpty(request.Modelo) || 
+                if (string.IsNullOrEmpty(request.Placa) || string.IsNullOrEmpty(request.Modelo) ||
                     request.Capacidade <= 0 || request.Ano <= 0)
                 {
                     return BadRequest(new { message = "Placa, modelo, capacidade e ano são obrigatórios" });
                 }
 
-                // Verificar se já existe ônibus com essa placa
                 var existingOnibus = _onibusDAO.GetByPlaca(request.Placa);
                 if (existingOnibus != null)
                 {

@@ -31,7 +31,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 var totalDrivers = _usuarioDAO.GetAll().Count;
                 var totalRoutes = _rotaDAO.GetAll().Count;
                 
-                // Buscar rotas ativas de forma segura, tratando possíveis erros de conversão de enum
                 int activeRoutes = 0;
                 try
                 {
@@ -40,11 +39,9 @@ namespace SmartSell.Api.Controllers.Galdino
                 }
                 catch (Exception)
                 {
-                    // Se houver erro de conversão de enum, contar todas as rotas como fallback
                     activeRoutes = totalRoutes;
                 }
 
-                // Buscar pagamentos pendentes de forma segura
                 int pendingPayments = 0;
                 double monthlyRevenue = 0;
                 try
@@ -59,7 +56,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 }
                 catch (Exception)
                 {
-                    // Se houver erro, usar valores padrão
                     pendingPayments = 0;
                     monthlyRevenue = 0;
                 }

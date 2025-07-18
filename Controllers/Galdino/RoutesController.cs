@@ -110,8 +110,8 @@ namespace SmartSell.Api.Controllers.Galdino
                     _horarioSaida = horarioSaida,
                     _status = Enum.TryParse<StatusRotaEnum>(request.Status, out var statusEnum) ? statusEnum : StatusRotaEnum.Planejada,
                     _motoristaId = request.DriverId,
-                    _onibusId = 1, // Valor padrão
-                    _instituicaoId = 1 // Valor padrão
+                    _onibusId = 1,
+                    _instituicaoId = 1
                 };
 
                 _rotaDAO.Create(rota);

@@ -38,7 +38,6 @@ namespace SmartSell.Api.Models.Galdino
         [Column("status")]
         public StatusOnibusEnum _status { get; set; } = StatusOnibusEnum.Ativo;
 
-        // Navigation Properties
         public virtual ICollection<Rota> Rotas { get; set; } = new List<Rota>();
 
         public Onibus()

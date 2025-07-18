@@ -75,7 +75,6 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar campos obrigatórios
                 if (string.IsNullOrEmpty(request.Nome) || string.IsNullOrEmpty(request.Cidade))
                 {
                     return BadRequest(new { message = "Nome e cidade são obrigatórios" });

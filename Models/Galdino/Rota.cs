@@ -62,7 +62,6 @@ namespace SmartSell.Api.Models.Galdino
         [Required]
         public int _instituicaoId { get; set; }
 
-        // Navigation Properties
         [ForeignKey("_motoristaId")]
         public virtual Motorista? Motorista { get; set; }
         

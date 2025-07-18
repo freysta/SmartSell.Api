@@ -82,14 +82,12 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar se email já existe
                 var existingUser = _usuarioDAO.GetByEmail(request.Email);
                 if (existingUser != null)
                 {
                     return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                // Validar se CPF já existe (se fornecido)
                 if (!string.IsNullOrEmpty(request.Cpf))
                 {
                     var existingCpf = _motoristaDAO.GetByCpf(request.Cpf);
@@ -99,7 +97,6 @@ namespace SmartSell.Api.Controllers.Galdino
                     }
                 }
 
-                // Validar se CNH já existe (se fornecida)
                 if (!string.IsNullOrEmpty(request.Cnh))
                 {
                     var existingCnh = _motoristaDAO.GetByCnh(request.Cnh);
@@ -109,13 +106,11 @@ namespace SmartSell.Api.Controllers.Galdino
                     }
                 }
 
-                // Validar campos obrigatórios
                 if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email))
                 {
                     return BadRequest(new { message = "Nome e email são obrigatórios" });
                 }
 
-                // 1. Primeiro criar o usuário
                 var usuario = new Usuario
                 {
                     _nome = request.Name,
@@ -126,7 +121,6 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 _usuarioDAO.Create(usuario);
 
-                // 2. Depois criar o motorista vinculado ao usuário
                 var motorista = new Motorista
                 {
                     _cnh = request.Cnh ?? "",
@@ -134,11 +128,11 @@ namespace SmartSell.Api.Controllers.Galdino
                     _telefone = request.Phone,
                     _vencCnh = !string.IsNullOrEmpty(request.LicenseExpiry) 
                         ? DateTime.Parse(request.LicenseExpiry) 
-                        : DateTime.Now.AddYears(5), // Data padrão se não fornecida
+                        : DateTime.Now.AddYears(5),
                     _dataNascimento = !string.IsNullOrEmpty(request.BirthDate) 
                         ? DateTime.Parse(request.BirthDate) 
-                        : DateTime.Now.AddYears(-30), // Data padrão se não fornecida
-                    _usuarioId = usuario._id // ✅ Vinculação correta
+                        : DateTime.Now.AddYears(-30),
+                    _usuarioId = usuario._id
                 };
 
                 _motoristaDAO.Create(motorista);
@@ -222,7 +216,6 @@ namespace SmartSell.Api.Controllers.Galdino
                 if (motorista == null)
                     return NotFound("Motorista não encontrado");
 
-                // Verificar se há rotas associadas através do relacionamento
                 if (motorista.Rotas != null && motorista.Rotas.Any())
                 {
                     return BadRequest(new { message = "Não é possível excluir motorista com rotas associadas" });

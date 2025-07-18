@@ -23,20 +23,17 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar se email já existe
                 var existingUser = _usuarioDAO.GetByEmail(request.Email);
                 if (existingUser != null)
                 {
                     return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                // Validar campos obrigatórios
                 if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 {
                     return BadRequest(new { message = "Nome, email e senha são obrigatórios" });
                 }
 
-                // 1. Primeiro criar o usuário
                 var usuario = new Usuario
                 {
                     _nome = request.Name,
@@ -47,11 +44,10 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 _usuarioDAO.Create(usuario);
 
-                // 2. Depois criar o gestor de sistema vinculado ao usuário
                 var gestorSistema = new GestorSistema
                 {
-                    _nivelAcesso = request.AccessLevel ?? 1, // Nível padrão 1 se não especificado
-                    _usuarioId = usuario._id // ✅ Vinculação correta
+                    _nivelAcesso = request.AccessLevel ?? 1,
+                    _usuarioId = usuario._id
                 };
 
                 _gestorSistemaDAO.Create(gestorSistema);
@@ -109,20 +105,17 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                // Validar se email já existe
                 var existingUser = _usuarioDAO.GetByEmail(request.Email);
                 if (existingUser != null)
                 {
                     return BadRequest(new { message = "Email já está em uso" });
                 }
 
-                // Validar campos obrigatórios
                 if (string.IsNullOrEmpty(request.Name) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 {
                     return BadRequest(new { message = "Nome, email e senha são obrigatórios" });
                 }
 
-                // 1. Primeiro criar o usuário
                 var usuario = new Usuario
                 {
                     _nome = request.Name,
@@ -133,11 +126,10 @@ namespace SmartSell.Api.Controllers.Galdino
 
                 _usuarioDAO.Create(usuario);
 
-                // 2. Depois criar o gestor de sistema vinculado ao usuário
                 var gestorSistema = new GestorSistema
                 {
-                    _nivelAcesso = request.AccessLevel ?? 1, // Nível padrão 1 se não especificado
-                    _usuarioId = usuario._id // ✅ Vinculação correta
+                    _nivelAcesso = request.AccessLevel ?? 1,
+                    _usuarioId = usuario._id
                 };
 
                 _gestorSistemaDAO.Create(gestorSistema);
