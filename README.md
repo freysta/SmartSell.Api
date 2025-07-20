@@ -259,6 +259,6 @@ Este projeto foi desenvolvido para fins acadêmicos. Para dúvidas sobre impleme
 
 ---
 
-**Desenvolvido para o curso de Programação Orientada a Objetos do professor Elias de Abreus, INSTITUTO FEDERLA DE RONDÔNIA** 🎓
+**Desenvolvido para o curso de Programação Orientada a Objetos do professor Elias de Abreus, INSTITUTO FEDERAL DE RONDÔNIA** 🎓
 
 **Sistema de Transporte Universitário Galdino** 🚌
