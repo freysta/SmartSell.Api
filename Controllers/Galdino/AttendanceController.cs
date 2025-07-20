@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/attendance")]
     public class AttendanceController : ControllerBase
     {
         private readonly PresencaDAO _presencaDAO;

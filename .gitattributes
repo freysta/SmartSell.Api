@@ -1,0 +1,26 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# C# files
+*.cs text diff=csharp
+
+# JSON files
+*.json text
+
+# Config files
+*.config text
+*.xml text
+
+# Documentation
+*.md text
+*.txt text
+
+# Binary files
+*.dll binary
+*.exe binary
+*.pdb binary
+*.jpg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary

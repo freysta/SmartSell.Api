@@ -18,7 +18,7 @@ namespace SmartSell.Api.Models.Galdino
         Transferência
     }
 
-    [Table("Pagamento")]
+    [Table("pagamento")]
     public class Pagamento
     {
         [Key]

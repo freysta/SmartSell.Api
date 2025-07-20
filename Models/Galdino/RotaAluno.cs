@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SmartSell.Api.Models.Galdino
 {
-    [Table("RotaAlunos")]
+    [Table("rotaalunos")]
     public class RotaAluno
     {
         [Key]

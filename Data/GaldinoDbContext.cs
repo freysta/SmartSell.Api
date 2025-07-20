@@ -17,7 +17,6 @@ namespace SmartSell.Api.Data
         public DbSet<Onibus> Onibus { get; set; }
         public DbSet<PontoEmbarque> PontosEmbarque { get; set; }
         public DbSet<Rota> Rotas { get; set; }
-        public DbSet<RotaPonto> RotaPontos { get; set; }
         public DbSet<RotaAluno> RotaAlunos { get; set; }
         public DbSet<Presenca> Presencas { get; set; }
         public DbSet<Pagamento> Pagamentos { get; set; }
@@ -49,59 +48,6 @@ namespace SmartSell.Api.Data
                 .IsUnique();
 
             modelBuilder.Entity<Aluno>()
-                .HasOne(a => a.Usuario)
-                .WithMany()
-                .HasForeignKey(a => a._usuarioId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Aluno>()
-                .HasOne(a => a.Instituicao)
-                .WithMany()
-                .HasForeignKey(a => a._instituicaoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Motorista>()
-                .HasOne(m => m.Usuario)
-                .WithMany()
-                .HasForeignKey(m => m._usuarioId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<GestorSistema>()
-                .HasOne<Usuario>()
-                .WithMany()
-                .HasForeignKey(g => g._usuarioId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Rota>()
-                .HasOne(r => r.Motorista)
-                .WithMany(m => m.Rotas)
-                .HasForeignKey(r => r._motoristaId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Rota>()
-                .HasOne(r => r.Onibus)
-                .WithMany(o => o.Rotas)
-                .HasForeignKey(r => r._onibusId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Rota>()
-                .HasOne(r => r.Instituicao)
-                .WithMany()
-                .HasForeignKey(r => r._instituicaoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Pagamento>()
-                .HasOne(p => p.Aluno)
-                .WithMany(a => a.Pagamentos)
-                .HasForeignKey(p => p._alunoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Notificacao>()
-                .ToTable("Notificacao")
-                .Property(n => n._alunoId)
-                .HasColumnName("fk_id_aluno");
-
-            modelBuilder.Entity<Aluno>()
                 .Property(a => a._turno)
                 .HasConversion<string>();
 
@@ -131,6 +77,31 @@ namespace SmartSell.Api.Data
             modelBuilder.Entity<Onibus>()
                 .Property(o => o._status)
                 .HasConversion<string>();
+
+            modelBuilder.Entity<Emergencia>(entity =>
+            {
+                entity.ToTable("emergencia");
+                entity.HasKey(e => e._id);
+                entity.Property(e => e._id).HasColumnName("id_emergencia");
+                entity.Property(e => e._rotaId).HasColumnName("fk_id_rota");
+                entity.Property(e => e._tipoEmergencia).HasColumnName("tipo_emergencia");
+                entity.Property(e => e._descricao).HasColumnName("descricao");
+                entity.Property(e => e._dataHora).HasColumnName("data_hora");
+                entity.Property(e => e._resolvido).HasColumnName("resolvido");
+                entity.Property(e => e._observacoes).HasColumnName("observacoes");
+            });
+
+            modelBuilder.Entity<RotaAluno>(entity =>
+            {
+                entity.ToTable("rotaalunos");
+                entity.HasKey(ra => ra._id);
+                entity.Property(ra => ra._id).HasColumnName("id_rota_aluno");
+                entity.Property(ra => ra._rotaId).HasColumnName("fk_id_rota");
+                entity.Property(ra => ra._alunoId).HasColumnName("fk_id_aluno");
+                entity.Property(ra => ra._pontoId).HasColumnName("fk_id_ponto");
+                entity.Property(ra => ra._confirmado).HasColumnName("confirmado");
+                entity.Property(ra => ra._dataConfirmacao).HasColumnName("data_confirmacao");
+            });
 
             SeedData(modelBuilder);
         }

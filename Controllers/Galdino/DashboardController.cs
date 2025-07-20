@@ -10,14 +10,14 @@ namespace SmartSell.Api.Controllers.Galdino
     public class DashboardController : ControllerBase
     {
         private readonly AlunoDAO _alunoDAO;
-        private readonly UsuarioDAO _usuarioDAO;
+        private readonly MotoristaDAO _motoristaDAO;
         private readonly RotaDAO _rotaDAO;
         private readonly PagamentoDAO _pagamentoDAO;
 
         public DashboardController(GaldinoDbContext context)
         {
             _alunoDAO = new AlunoDAO(context);
-            _usuarioDAO = new UsuarioDAO(context);
+            _motoristaDAO = new MotoristaDAO(context);
             _rotaDAO = new RotaDAO(context);
             _pagamentoDAO = new PagamentoDAO(context);
         }
@@ -27,23 +27,46 @@ namespace SmartSell.Api.Controllers.Galdino
         {
             try
             {
-                var totalStudents = _alunoDAO.GetAll().Count;
-                var totalDrivers = _usuarioDAO.GetAll().Count;
-                var totalRoutes = _rotaDAO.GetAll().Count;
-                
+                int totalStudents = 0;
+                int totalDrivers = 0;
+                int totalRoutes = 0;
                 int activeRoutes = 0;
+                int pendingPayments = 0;
+                double monthlyRevenue = 0;
+
+                try
+                {
+                    totalStudents = _alunoDAO.GetAll().Count;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao contar estudantes: {ex.Message}");
+                    totalStudents = 0;
+                }
+
+                try
+                {
+                    totalDrivers = _motoristaDAO.GetAll().Count;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao contar motoristas: {ex.Message}");
+                    totalDrivers = 0;
+                }
+
                 try
                 {
                     var rotas = _rotaDAO.GetAll();
+                    totalRoutes = rotas.Count;
                     activeRoutes = rotas.Count(r => r._status == StatusRotaEnum.Planejada || r._status == StatusRotaEnum.EmAndamento);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    activeRoutes = totalRoutes;
+                    Console.WriteLine($"Erro ao contar rotas: {ex.Message}");
+                    totalRoutes = 0;
+                    activeRoutes = 0;
                 }
 
-                int pendingPayments = 0;
-                double monthlyRevenue = 0;
                 try
                 {
                     var pagamentos = _pagamentoDAO.GetAll();
@@ -54,8 +77,9 @@ namespace SmartSell.Api.Controllers.Galdino
                                    p._dataPagamento.Year == DateTime.Now.Year)
                         .Sum(p => (double)p._valor);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Console.WriteLine($"Erro ao processar pagamentos: {ex.Message}");
                     pendingPayments = 0;
                     monthlyRevenue = 0;
                 }
@@ -65,16 +89,34 @@ namespace SmartSell.Api.Controllers.Galdino
                     totalStudents = totalStudents,
                     totalDrivers = totalDrivers,
                     totalRoutes = totalRoutes,
+                    activeRoutes = activeRoutes,
                     pendingPayments = pendingPayments,
                     monthlyRevenue = monthlyRevenue,
-                    activeRoutes = activeRoutes
+                    lastUpdated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
                 };
 
-                return Ok(new { data = stats, message = "Estatísticas obtidas com sucesso" });
+                return Ok(new { 
+                    success = true,
+                    data = stats, 
+                    message = "Estatísticas obtidas com sucesso" 
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                Console.WriteLine($"Erro geral no dashboard: {ex.Message}");
+                return StatusCode(500, new { 
+                    success = false,
+                    message = $"Erro interno do servidor: {ex.Message}",
+                    data = new {
+                        totalStudents = 0,
+                        totalDrivers = 0,
+                        totalRoutes = 0,
+                        activeRoutes = 0,
+                        pendingPayments = 0,
+                        monthlyRevenue = 0,
+                        lastUpdated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    }
+                });
             }
         }
     }

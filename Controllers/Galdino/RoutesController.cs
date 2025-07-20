@@ -35,20 +35,22 @@ namespace SmartSell.Api.Controllers.Galdino
                 var rotas = todasRotas.Select(r => new
                 {
                     id = r._id,
+                    name = $"Rota {r._tipoRota} - {r._dataRota:dd/MM/yyyy}",
                     date = r._dataRota.ToString("yyyy-MM-dd"),
-                    destination = r._tipoRota,
+                    destination = r._tipoRota.ToString(),
                     departureTime = r._horarioSaida.ToString(@"hh\:mm"),
-                    status = r._status,
+                    status = r._status.ToString(),
                     driverId = r._motoristaId,
                     driverName = _usuarioDAO.GetById(r._motoristaId)?._nome ?? "N/A",
                     createdAt = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 }).ToList();
 
-                return Ok(new { data = rotas, message = "Rotas listadas com sucesso" });
+                return Ok(rotas);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = ex.Message });
+                Console.WriteLine($"Erro ao buscar rotas: {ex.Message}");
+                return Ok(new List<object>());
             }
         }
 

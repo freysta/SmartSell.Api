@@ -18,7 +18,43 @@ namespace SmartSell.Api.DAO
             List<Presenca> presencas = new List<Presenca>();
             try
             {
-                presencas = _context.Presencas.ToList();
+                using (var connection = _context.Database.GetDbConnection())
+                {
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            SELECT 
+                                id_presenca, 
+                                fk_id_rota, 
+                                fk_id_aluno, 
+                                fk_id_ponto, 
+                                presente, 
+                                horario_embarque, 
+                                horario_desembarque, 
+                                observacao 
+                            FROM Presenca";
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var presenca = new Presenca
+                                {
+                                    _id = reader.GetInt32(0),
+                                    _rotaId = reader.GetInt32(1),
+                                    _alunoId = reader.GetInt32(2),
+                                    _pontoId = reader.GetInt32(3),
+                                    _presente = reader.GetString(4),
+                                    _horarioEmbarque = reader.IsDBNull(5) ? null : (TimeSpan)reader.GetValue(5),
+                                    _horarioDesembarque = reader.IsDBNull(6) ? null : (TimeSpan)reader.GetValue(6),
+                                    _observacao = reader.IsDBNull(7) ? null : reader.GetString(7)
+                                };
+                                presencas.Add(presenca);
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -31,8 +67,49 @@ namespace SmartSell.Api.DAO
         {
             try
             {
-                return _context.Presencas
-                    .FirstOrDefault(p => p._id == id);
+                using (var connection = _context.Database.GetDbConnection())
+                {
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            SELECT 
+                                id_presenca, 
+                                fk_id_rota, 
+                                fk_id_aluno, 
+                                fk_id_ponto, 
+                                presente, 
+                                horario_embarque, 
+                                horario_desembarque, 
+                                observacao 
+                            FROM Presenca 
+                            WHERE id_presenca = @id";
+                        
+                        var parameter = command.CreateParameter();
+                        parameter.ParameterName = "@id";
+                        parameter.Value = id;
+                        command.Parameters.Add(parameter);
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                return new Presenca
+                                {
+                                    _id = reader.GetInt32(0),
+                                    _rotaId = reader.GetInt32(1),
+                                    _alunoId = reader.GetInt32(2),
+                                    _pontoId = reader.GetInt32(3),
+                                    _presente = reader.GetString(4),
+                                    _horarioEmbarque = reader.IsDBNull(5) ? null : (TimeSpan)reader.GetValue(5),
+                                    _horarioDesembarque = reader.IsDBNull(6) ? null : (TimeSpan)reader.GetValue(6),
+                                    _observacao = reader.IsDBNull(7) ? null : reader.GetString(7)
+                                };
+                            }
+                            return null;
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

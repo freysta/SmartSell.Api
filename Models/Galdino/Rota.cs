@@ -71,7 +71,6 @@ namespace SmartSell.Api.Models.Galdino
         [ForeignKey("_instituicaoId")]
         public virtual Instituicao? Instituicao { get; set; }
 
-        public virtual ICollection<RotaPonto> RotaPontos { get; set; } = new List<RotaPonto>();
         public virtual ICollection<RotaAluno> RotaAlunos { get; set; } = new List<RotaAluno>();
         public virtual ICollection<Presenca> Presencas { get; set; } = new List<Presenca>();
         public virtual ICollection<Emergencia> Emergencias { get; set; } = new List<Emergencia>();

@@ -95,6 +95,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+
+
 # Arquivos de relatórios e documentação temporária
 RELATORIO_*.md
 ANALISE_*.md
@@ -112,3 +114,7 @@ logs/
 COMPARACAO_ARQUITETURA.md
 DATABASE_ANALYSIS.md
 TODOS_OS_ENDPOINTS_API.md
+
+# Arquivos de teste
+*.bat
+teste_*.bat

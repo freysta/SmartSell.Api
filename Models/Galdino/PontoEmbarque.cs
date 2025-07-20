@@ -56,7 +56,6 @@ namespace SmartSell.Api.Models.Galdino
         [Column("ordem_volta")]
         public int? _ordemVolta { get; set; }
 
-        public virtual ICollection<RotaPonto> RotaPontos { get; set; } = new List<RotaPonto>();
         public virtual ICollection<RotaAluno> RotaAlunos { get; set; } = new List<RotaAluno>();
         public virtual ICollection<Presenca> Presencas { get; set; } = new List<Presenca>();
 

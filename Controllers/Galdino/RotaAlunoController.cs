@@ -7,7 +7,7 @@ using SmartSell.Api.Models.Galdino;
 namespace SmartSell.Api.Controllers.Galdino
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/rotaaluno")]
     public class RotaAlunoController : ControllerBase
     {
         private readonly GaldinoDbContext _context;
@@ -106,33 +106,36 @@ namespace SmartSell.Api.Controllers.Galdino
         [HttpPost]
         public async Task<ActionResult<RotaAlunoResponseDto>> CreateRotaAluno(CreateRotaAlunoDto dto)
         {
-            var rotaAluno = new RotaAluno
+            try
             {
-                _rotaId = dto.FkIdRota,
-                _alunoId = dto.FkIdAluno,
-                _pontoId = dto.FkIdPonto,
-                _confirmado = dto.Confirmado
-            };
+                var sql = @"INSERT INTO rotaalunos (fk_id_rota, fk_id_aluno, fk_id_ponto, confirmado, data_confirmacao) 
+                           VALUES ({0}, {1}, {2}, {3}, {4})";
+                
+                await _context.Database.ExecuteSqlRawAsync(sql, 
+                    dto.FkIdRota, 
+                    dto.FkIdAluno, 
+                    dto.FkIdPonto, 
+                    dto.Confirmado,
+                    DateTime.Now);
 
-            _context.RotaAlunos.Add(rotaAluno);
-            await _context.SaveChangesAsync();
-
-            var response = await _context.RotaAlunos
-                .Where(ra => ra._id == rotaAluno._id)
-                .Select(ra => new RotaAlunoResponseDto
+                var response = new RotaAlunoResponseDto
                 {
-                    Id = ra._id,
-                    FkIdRota = ra._rotaId,
-                    FkIdAluno = ra._alunoId,
-                    FkIdPonto = ra._pontoId,
-                    Confirmado = ra._confirmado,
+                    Id = 0,
+                    FkIdRota = dto.FkIdRota,
+                    FkIdAluno = dto.FkIdAluno,
+                    FkIdPonto = dto.FkIdPonto,
+                    Confirmado = dto.Confirmado,
                     NomeAluno = "",
                     DestinoRota = "",
                     NomePonto = ""
-                })
-                .FirstOrDefaultAsync();
+                };
 
-            return CreatedAtAction(nameof(GetRotaAluno), new { id = rotaAluno._id }, response);
+                return Ok(new { message = "RotaAluno criado com sucesso", data = response });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = new { message = "Erro ao criar RotaAluno", details = ex.Message } });
+            }
         }
 
         [HttpPut("{id}")]

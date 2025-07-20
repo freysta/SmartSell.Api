@@ -18,7 +18,41 @@ namespace SmartSell.Api.DAO
             List<Notificacao> notificacoes = new List<Notificacao>();
             try
             {
-                notificacoes = _context.Notificacoes.ToList();
+                using (var connection = _context.Database.GetDbConnection())
+                {
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            SELECT 
+                                id_notificacao, 
+                                titulo, 
+                                mensagem, 
+                                data_envio, 
+                                tipo, 
+                                lida, 
+                                fk_id_aluno 
+                            FROM Notificacao";
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var notificacao = new Notificacao
+                                {
+                                    _id = reader.GetInt32(0),
+                                    _titulo = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                    _mensagem = reader.GetString(2),
+                                    _dataEnvio = reader.GetDateTime(3),
+                                    _tipo = reader.GetString(4),
+                                    _lida = reader.GetBoolean(5),
+                                    _alunoId = reader.IsDBNull(6) ? null : reader.GetInt32(6)
+                                };
+                                notificacoes.Add(notificacao);
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -31,8 +65,47 @@ namespace SmartSell.Api.DAO
         {
             try
             {
-                return _context.Notificacoes
-                    .FirstOrDefault(n => n._id == id);
+                using (var connection = _context.Database.GetDbConnection())
+                {
+                    connection.Open();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = @"
+                            SELECT 
+                                id_notificacao, 
+                                titulo, 
+                                mensagem, 
+                                data_envio, 
+                                tipo, 
+                                lida, 
+                                fk_id_aluno 
+                            FROM Notificacao 
+                            WHERE id_notificacao = @id";
+                        
+                        var parameter = command.CreateParameter();
+                        parameter.ParameterName = "@id";
+                        parameter.Value = id;
+                        command.Parameters.Add(parameter);
+                        
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                return new Notificacao
+                                {
+                                    _id = reader.GetInt32(0),
+                                    _titulo = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                    _mensagem = reader.GetString(2),
+                                    _dataEnvio = reader.GetDateTime(3),
+                                    _tipo = reader.GetString(4),
+                                    _lida = reader.GetBoolean(5),
+                                    _alunoId = reader.IsDBNull(6) ? null : reader.GetInt32(6)
+                                };
+                            }
+                            return null;
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

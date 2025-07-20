@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SmartSell.Api.Data;
+using SmartSell.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,8 @@ builder.Services.AddDbContext<GaldinoDbContext>(options =>
         new MySqlServerVersion(new Version(8, 0, 21))
     )
 );
+
+builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddCors(options =>
 {
@@ -37,10 +40,18 @@ app.UseCors("AllowFrontend");
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<GaldinoDbContext>();
-    context.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<GaldinoDbContext>();
+        context.Database.EnsureCreated();
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Aviso: Não foi possível conectar ao banco de dados: {ex.Message}");
+    Console.WriteLine("A API será iniciada sem conexão com o banco. Configure a string de conexão no appsettings.json");
 }
 
 app.Run();
